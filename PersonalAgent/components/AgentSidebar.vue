@@ -1,39 +1,43 @@
 <template>
 	<view class="sidebar" :class="{ collapsed }" @click="closeMenus">
 		<view class="sidebar-header">
-			<text v-if="!collapsed" class="title">我的智能体</text>
+			<view v-if="!collapsed" class="header-main">
+				<text class="title">角色</text>
+				<button class="header-primary-btn" size="mini" @click="$emit('create')">+</button>
+			</view>
 			<view class="header-actions">
-				<button v-if="!collapsed" class="header-primary-btn" size="mini" @click="$emit('create')">+新建</button>
 				<button class="header-icon-btn" size="mini" @click="$emit('toggle-collapse')">
 					<uni-icons :type="collapsed ? 'right' : 'left'" size="14" color="#2f6dff"></uni-icons>
 				</button>
 			</view>
 		</view>
-		<scroll-view class="role-list" scroll-y>
+		<scroll-view class="role-list" scroll-y :show-scrollbar="false" @scroll="onRoleScroll">
+			<view class="role-spacer" :style="{ height: `${roleTopSpacer}px` }"></view>
 			<view
-				v-for="role in roles"
-				:key="role.id"
+				v-for="entry in visibleRoleEntries"
+				:key="entry.role.id"
 				class="role-item"
-				:class="{ active: role.id === selectedRoleId, 'menu-open': openMenuRoleId === role.id }"
-				@click="$emit('select', role.id)"
+				:class="{ active: entry.role.id === selectedRoleId, 'menu-open': openMenuRoleId === entry.role.id }"
+				@click="$emit('select', entry.role.id)"
 			>
 				<view class="role-avatar">
 					<text class="role-avatar-text">AI</text>
 				</view>
 				<view class="role-main">
-					<text class="role-name">{{ collapsed ? (role.name || '').slice(0, 1) : role.name }}</text>
-					<text v-if="!collapsed" class="role-kb">绑定 {{ (role.boundKbIds || []).length }} 个知识库</text>
+					<text class="role-name">{{ collapsed ? (entry.role.name || '').slice(0, 1) : entry.role.name }}</text>
+					<text v-if="!collapsed" class="role-kb">绑定 {{ (entry.role.boundKbIds || []).length }} 个知识库</text>
 				</view>
 				<view v-if="!collapsed" class="role-actions">
 					<view class="more-wrap">
-						<button class="more-btn" size="mini" @click.stop="toggleRoleMenu(role.id)">⋯</button>
-						<view v-if="openMenuRoleId === role.id" class="item-menu">
-							<text class="menu-item" @click.stop="onEdit(role)">编辑</text>
-							<text class="menu-item danger" @click.stop="onDelete(role.id)">删除</text>
+						<button class="more-btn" size="mini" @click.stop="toggleRoleMenu(entry.role.id)">⋯</button>
+						<view v-if="openMenuRoleId === entry.role.id" class="item-menu">
+							<text class="menu-item" @click.stop="onEdit(entry.role)">编辑</text>
+							<text class="menu-item danger" @click.stop="onDelete(entry.role.id)">删除</text>
 						</view>
 					</view>
 				</view>
 			</view>
+			<view class="role-spacer" :style="{ height: `${roleBottomSpacer}px` }"></view>
 			<view v-if="roles.length === 0" class="empty">还没有角色，点击“新建”开始</view>
 		</scroll-view>
 	</view>
@@ -58,8 +62,49 @@ export default {
 	},
 	data() {
 		return {
-			openMenuRoleId: ''
+			openMenuRoleId: '',
+			roleScrollTop: 0,
+			roleViewportH: 0,
+			roleItemH: 86,
+			roleOverscan: 4
 		};
+	},
+	computed: {
+		roleStartIndex() {
+			if (!this.roles.length) return 0;
+			return Math.max(0, Math.floor(this.roleScrollTop / this.roleItemH) - this.roleOverscan);
+		},
+		roleEndIndex() {
+			if (!this.roles.length) return 0;
+			const visibleCount = Math.ceil((this.roleViewportH || 320) / this.roleItemH) + this.roleOverscan * 2;
+			return Math.min(this.roles.length, this.roleStartIndex + visibleCount);
+		},
+		visibleRoleEntries() {
+			return this.roles.slice(this.roleStartIndex, this.roleEndIndex).map((role, offset) => ({
+				role,
+				index: this.roleStartIndex + offset
+			}));
+		},
+		roleTopSpacer() {
+			return this.roleStartIndex * this.roleItemH;
+		},
+		roleBottomSpacer() {
+			return Math.max(0, (this.roles.length - this.roleEndIndex) * this.roleItemH);
+		}
+	},
+	watch: {
+		roles: {
+			deep: true,
+			handler() {
+				this.$nextTick(() => this.measureRoleViewport());
+			}
+		},
+		collapsed() {
+			this.$nextTick(() => this.measureRoleViewport());
+		}
+	},
+	mounted() {
+		this.$nextTick(() => this.measureRoleViewport());
 	},
 	methods: {
 		toggleRoleMenu(roleId) {
@@ -75,6 +120,21 @@ export default {
 		onDelete(roleId) {
 			this.openMenuRoleId = '';
 			this.$emit('delete', roleId);
+		},
+		onRoleScroll(e) {
+			const d = e && e.detail ? e.detail : {};
+			this.roleScrollTop = Number(d.scrollTop || 0);
+			if (d.scrollHeight && d.scrollTop != null && this.roleViewportH <= 0) {
+				const viewport = Number(d.scrollHeight) - Number(d.deltaY || 0);
+				if (viewport > 0) this.roleViewportH = Math.min(viewport, 600);
+			}
+		},
+		measureRoleViewport() {
+			const q = uni.createSelectorQuery().in(this);
+			q.select('.role-list').boundingClientRect((rect) => {
+				if (rect && rect.height) this.roleViewportH = rect.height;
+			});
+			q.exec();
 		}
 	}
 };
@@ -117,8 +177,15 @@ export default {
 	flex-shrink: 0;
 }
 
+.header-main {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
 .title {
-	flex: 1;
+	flex: 0 1 auto;
 	min-width: 0;
 	font-size: 15px;
 	font-weight: 600;
@@ -176,10 +243,21 @@ export default {
 
 .role-list {
 	flex: 1;
-	padding: 0 12rpx 12rpx;
+	padding: 14rpx 12rpx 12rpx;
 	min-width: 0;
 	box-sizing: border-box;
 	overflow-x: hidden;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.role-spacer {
+	width: 100%;
+	flex-shrink: 0;
+}
+
+.role-list::-webkit-scrollbar {
+	display: none;
 }
 
 .role-item {
@@ -339,7 +417,7 @@ export default {
 }
 
 .sidebar.collapsed .role-list {
-	padding: 0 8rpx 8rpx;
+	padding: 14rpx 8rpx 8rpx;
 }
 
 .sidebar.collapsed .role-item {

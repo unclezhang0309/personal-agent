@@ -3,7 +3,6 @@
 		<view class="panel">
 			<view class="header">
 				<text class="title">{{ mode === 'edit' ? '编辑角色' : '创建角色' }}</text>
-				<text class="close" @click="$emit('close')">关闭</text>
 			</view>
 
 			<view class="form">
@@ -88,11 +87,43 @@
 
 				<text class="label">绑定知识库（可多选）</text>
 				<view class="kb-list">
-					<label v-for="kb in kbs" :key="kb.id" class="kb-item">
-						<checkbox :checked="(formData.boundKbIds || []).includes(kb.id)" @click="toggleKb(kb.id)" />
-						<text>{{ kb.name }}</text>
-					</label>
-					<text v-if="kbs.length === 0" class="hint">知识库，请先在知识库面板创建</text>
+					<input
+						class="kb-search-input"
+						:value="kbSearchText"
+						placeholder="搜索知识库名称..."
+						@input="onKbSearchInput"
+					/>
+					<view v-if="selectedKbs.length > 0" class="selected-kb-wrap">
+						<text class="selected-kb-title">已选 {{ selectedKbs.length }} 项</text>
+						<view class="selected-kb-tags">
+							<view v-for="kb in selectedKbs" :key="`selected-${kb.id}`" class="selected-kb-tag">
+								<text class="selected-kb-name">{{ kb.name }}</text>
+								<text class="selected-kb-remove" @click="toggleKb(kb.id)">×</text>
+							</view>
+						</view>
+					</view>
+					<scroll-view
+						v-if="kbs.length > 0"
+						class="kb-option-list"
+						scroll-y
+						:show-scrollbar="false"
+						@scroll="onKbListScroll"
+					>
+						<view class="kb-list-spacer" :style="{ height: `${kbListTopSpacer}px` }"></view>
+						<view
+							v-for="kb in visibleFilteredKbs"
+							:key="kb.id"
+							class="kb-item"
+							:class="{ selected: (formData.boundKbIds || []).includes(kb.id) }"
+							@click="toggleKb(kb.id)"
+						>
+							<text class="kb-item-name">{{ kb.name }}</text>
+							<text class="kb-item-check">{{ (formData.boundKbIds || []).includes(kb.id) ? '已选' : '选择' }}</text>
+						</view>
+						<view class="kb-list-spacer" :style="{ height: `${kbListBottomSpacer}px` }"></view>
+						<text v-if="filteredKbs.length === 0" class="hint">没有匹配的知识库</text>
+					</scroll-view>
+					<text v-else class="hint">知识库为空，请先在知识库面板创建</text>
 				</view>
 			</view>
 
@@ -166,21 +197,58 @@ export default {
 		return {
 			formData: createDefaultForm(),
 			nameError: '',
+			kbSearchText: '',
+			kbListScrollTop: 0,
+			kbListViewportH: 0,
+			kbItemH: 56,
+			kbOverscan: 4,
 			headOptions,
 			bodyOptions,
 			legOptions,
 			shoeOptions
 		};
 	},
-	computed: {},
+	computed: {
+		filteredKbs() {
+			const keyword = String(this.kbSearchText || '').trim().toLowerCase();
+			if (!keyword) return this.kbs;
+			return this.kbs.filter((kb) => String(kb.name || '').toLowerCase().includes(keyword));
+		},
+		selectedKbs() {
+			const selectedIds = new Set(this.formData.boundKbIds || []);
+			return this.kbs.filter((kb) => selectedIds.has(kb.id));
+		},
+		kbStartIndex() {
+			if (!this.filteredKbs.length) return 0;
+			return Math.max(0, Math.floor(this.kbListScrollTop / this.kbItemH) - this.kbOverscan);
+		},
+		kbEndIndex() {
+			if (!this.filteredKbs.length) return 0;
+			const visibleCount = Math.ceil((this.kbListViewportH || 260) / this.kbItemH) + this.kbOverscan * 2;
+			return Math.min(this.filteredKbs.length, this.kbStartIndex + visibleCount);
+		},
+		visibleFilteredKbs() {
+			return this.filteredKbs.slice(this.kbStartIndex, this.kbEndIndex);
+		},
+		kbListTopSpacer() {
+			return this.kbStartIndex * this.kbItemH;
+		},
+		kbListBottomSpacer() {
+			return Math.max(0, (this.filteredKbs.length - this.kbEndIndex) * this.kbItemH);
+		}
+	},
 	watch: {
 		visible(next) {
-			if (next) this.initForm();
+			if (next) {
+				this.initForm();
+				this.$nextTick(() => this.measureKbListViewport());
+			}
 		}
 	},
 	methods: {
 		initForm() {
 			this.nameError = '';
+			this.kbSearchText = '';
 			const base = createDefaultForm();
 			this.formData = {
 				...base,
@@ -230,6 +298,23 @@ export default {
 			else list.add(kbId);
 			this.formData.boundKbIds = Array.from(list);
 		},
+		onKbSearchInput(e) {
+			const d = e && e.detail;
+			this.kbSearchText = d && d.value != null ? d.value : '';
+			this.kbListScrollTop = 0;
+			this.$nextTick(() => this.measureKbListViewport());
+		},
+		onKbListScroll(e) {
+			const d = e && e.detail ? e.detail : {};
+			this.kbListScrollTop = Number(d.scrollTop || 0);
+		},
+		measureKbListViewport() {
+			const q = uni.createSelectorQuery().in(this);
+			q.select('.kb-option-list').boundingClientRect((rect) => {
+				if (rect && rect.height) this.kbListViewportH = rect.height;
+			});
+			q.exec();
+		},
 		onSubmit() {
 			const name = String(this.formData.name == null ? '' : this.formData.name).trim();
 			if (!name) {
@@ -264,7 +349,7 @@ export default {
 	width: min(760rpx, 96vw);
 	max-height: 88vh;
 	background: #fff;
-	border-radius: 22rpx;
+	border-radius: 24px;
 	display: flex;
 	flex-direction: column;
 	box-sizing: border-box;
@@ -286,11 +371,6 @@ export default {
 .title {
 	font-size: 32rpx;
 	font-weight: 600;
-}
-
-.close {
-	color: #637086;
-	font-size: 24rpx;
 }
 
 .form {
@@ -378,16 +458,108 @@ export default {
 	margin-top: 8rpx;
 }
 
+.kb-search-input {
+	width: 100%;
+	height: 70rpx;
+	min-height: 70rpx;
+	background: #f9fbff;
+	border: 1px solid #dbe2ef;
+	border-radius: 999rpx;
+	padding: 0 20rpx;
+	box-sizing: border-box;
+	font-size: 24rpx;
+	line-height: 70rpx;
+}
+
+.selected-kb-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
+}
+
+.selected-kb-title {
+	font-size: 22rpx;
+	color: #6b7280;
+}
+
+.selected-kb-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8rpx;
+}
+
+.selected-kb-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 8rpx;
+	background: #edf3ff;
+	border: 1px solid #d9e4ff;
+	border-radius: 999rpx;
+	padding: 6rpx 12rpx;
+	max-width: 100%;
+}
+
+.selected-kb-name {
+	font-size: 22rpx;
+	color: #2f6dff;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.selected-kb-remove {
+	font-size: 22rpx;
+	color: #5b6b80;
+	line-height: 1;
+}
+
+.kb-option-list {
+	max-height: 260rpx;
+	padding-right: 4rpx;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.kb-option-list::-webkit-scrollbar {
+	display: none;
+}
+
 .kb-item {
 	display: flex;
 	align-items: center;
-	gap: 10rpx;
+	justify-content: space-between;
+	gap: 12rpx;
 	font-size: 24rpx;
 	background: rgba(255, 255, 255, 0.92);
 	border: 1px solid #e5ebf6;
 	border-radius: 999rpx;
 	padding: 12rpx 14rpx;
 	box-sizing: border-box;
+	margin-bottom: 10rpx;
+}
+
+.kb-list-spacer {
+	width: 100%;
+	flex-shrink: 0;
+}
+
+.kb-item.selected {
+	background: #eef4ff;
+	border-color: #cfe0ff;
+}
+
+.kb-item-name {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kb-item-check {
+	flex-shrink: 0;
+	font-size: 20rpx;
+	color: #2f6dff;
 }
 
 .hint {
@@ -400,15 +572,20 @@ export default {
 	padding: 18rpx 22rpx;
 	display: flex;
 	justify-content: flex-end;
-	gap: 14rpx;
+	gap: 12rpx;
 }
 
 .btn {
 	margin: 0;
-	line-height: 1.9;
-	font-size: 24rpx;
+	min-height: 40px;
+	height: 40px;
+	line-height: 38px;
+	padding: 0 18px;
+	font-size: 14px;
 	border-radius: 999px;
 	transition: all 0.2s ease;
+	min-width: 96px;
+	font-weight: 600;
 }
 
 .btn.ghost {
@@ -455,11 +632,30 @@ export default {
 	.panel {
 		width: 100%;
 		max-height: 92vh;
-		border-radius: 28px 28px 0 0;
+		border-radius: 24px 24px 0 0;
 	}
 
 	.form {
 		padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+	}
+
+	.footer {
+		padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
+		justify-content: space-between;
+		gap: 10px;
+	}
+
+	.btn {
+		flex: 1;
+		min-width: 0;
+		height: 44px;
+		min-height: 44px;
+		line-height: 42px;
+		font-size: 15px;
+	}
+
+	.kb-option-list {
+		max-height: 200px;
 	}
 }
 </style>

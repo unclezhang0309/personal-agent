@@ -30,4 +30,16 @@
 		color: #333;
 		padding: 10px;
 	}
+
+	/* H5: keep toast above all custom overlays/dialogs */
+	.uni-toast,
+	.uni-toast-wrapper,
+	.uni-simple-toast,
+	[class*='uni-toast'],
+	[class*='uni-popup__toast'],
+	uni-toast,
+	uni-toast-view {
+		z-index: 2147483647 !important;
+		position: fixed !important;
+	}
 </style>

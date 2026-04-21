@@ -241,8 +241,10 @@ export default {
 				return;
 			}
 			const data = { ...payload, name };
+			let toastText = '';
 			if (this.roleEditorMode === 'edit' && data.id) {
 				this.roles = this.roles.map((item) => (item.id === data.id ? { ...item, ...data } : item));
+				toastText = '角色已更新';
 			} else {
 				const newRole = {
 					...data,
@@ -251,9 +253,11 @@ export default {
 				};
 				this.roles = [newRole, ...this.roles];
 				this.selectedRoleId = newRole.id;
+				toastText = '角色已创建';
 			}
 			this.roleEditorVisible = false;
 			this.persist();
+			uni.showToast({ title: toastText, icon: 'none' });
 		},
 		deleteRole(roleId) {
 			this.deleteRoleConfirmId = roleId;

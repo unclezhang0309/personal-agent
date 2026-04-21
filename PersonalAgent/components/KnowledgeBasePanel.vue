@@ -5,14 +5,22 @@
 				<button class="header-icon-btn" size="mini" @click="$emit('toggle-collapse')">
 					<uni-icons :type="collapsed ? 'left' : 'right'" size="14" color="#2f6dff"></uni-icons>
 				</button>
-				<text v-if="!collapsed" class="title">知识库管理</text>
-				<view v-if="!collapsed" class="header-actions">
-					<button size="mini" class="header-primary-btn" @click="openCreateKb">+新建知识库</button>
+				<view v-if="!collapsed" class="header-main">
+					<text class="title">知识库</text>
+					<button size="mini" class="header-primary-btn" @click="openCreateKb">+</button>
 				</view>
 			</view>
 
-			<scroll-view v-if="!collapsed" class="kb-scroll" scroll-y @click="closeActionMenus">
-				<view v-for="kb in kbs" :key="kb.id" class="kb-card" :class="{ 'menu-open': activeKbMenuId === kb.id }">
+			<scroll-view
+				v-if="!collapsed"
+				class="kb-scroll"
+				scroll-y
+				:show-scrollbar="false"
+				@scroll="onKbScroll"
+				@click="closeActionMenus"
+			>
+				<view class="kb-virtual-spacer" :style="{ height: `${kbVirtualTop}px` }"></view>
+				<view v-for="kb in visibleKbs" :key="kb.id" class="kb-card" :class="{ 'menu-open': activeKbMenuId === kb.id }">
 					<view class="kb-head">
 						<view class="kb-title-wrap">
 							<text class="kb-icon">{{ kb.icon || '📘' }}</text>
@@ -86,6 +94,7 @@
 						</view>
 					</view>
 				</view>
+				<view class="kb-virtual-spacer" :style="{ height: `${kbVirtualBottom}px` }"></view>
 				<view v-if="kbs.length === 0" class="empty">暂无知识库，请先创建一个</view>
 			</scroll-view>
 
@@ -185,14 +194,93 @@ export default {
 			panelActive: false,
 			hideTimer: null,
 			activeKbMenuId: '',
-			activeItemMenuId: ''
+			activeItemMenuId: '',
+			kbScrollTop: 0,
+			kbViewportH: 0,
+			kbOverscan: 4
 		};
+	},
+	computed: {
+		kbVirtualMap() {
+			let total = 0;
+			const offsets = [];
+			const heights = [];
+			for (let i = 0; i < this.kbs.length; i += 1) {
+				const kb = this.kbs[i];
+				offsets.push(total);
+				const h = this.estimateKbCardHeight(kb);
+				heights.push(h);
+				total += h;
+			}
+			return { offsets, heights, total };
+		},
+		kbStartIndex() {
+			const { offsets } = this.kbVirtualMap;
+			if (!offsets.length) return 0;
+			const top = this.kbScrollTop;
+			let idx = 0;
+			for (let i = 0; i < offsets.length; i += 1) {
+				if (offsets[i] > top) break;
+				idx = i;
+			}
+			return Math.max(0, idx - this.kbOverscan);
+		},
+		kbEndIndex() {
+			const { offsets, heights } = this.kbVirtualMap;
+			if (!offsets.length) return 0;
+			const bottom = this.kbScrollTop + (this.kbViewportH || 480) + 220;
+			let idx = offsets.length - 1;
+			for (let i = this.kbStartIndex; i < offsets.length; i += 1) {
+				const itemBottom = offsets[i] + heights[i];
+				if (itemBottom >= bottom) {
+					idx = i;
+					break;
+				}
+			}
+			return Math.min(this.kbs.length, idx + this.kbOverscan + 1);
+		},
+		visibleKbs() {
+			return this.kbs.slice(this.kbStartIndex, this.kbEndIndex);
+		},
+		kbVirtualTop() {
+			const { offsets } = this.kbVirtualMap;
+			return offsets[this.kbStartIndex] || 0;
+		},
+		kbVirtualBottom() {
+			const { offsets, heights, total } = this.kbVirtualMap;
+			if (!this.kbs.length) return 0;
+			const end = this.kbEndIndex - 1;
+			const renderedBottom = end >= 0 ? offsets[end] + heights[end] : 0;
+			return Math.max(0, total - renderedBottom);
+		},
+		currentItemKb() {
+			if (!this.itemForm || !this.itemForm.kbId) return { name: '', icon: '📘' };
+			return {
+				name: this.itemForm.kbName || this.getKbById(this.itemForm.kbId).name,
+				icon: this.itemForm.kbIcon || this.getKbById(this.itemForm.kbId).icon || '📘'
+			};
+		}
 	},
 	watch: {
 		visible: {
 			immediate: true,
 			handler(next) {
 				this.syncVisibility(next);
+			}
+		},
+		kbs: {
+			deep: true,
+			handler() {
+				this.$nextTick(() => this.measureKbViewport());
+			}
+		},
+		expandedKbIds() {
+			this.$nextTick(() => this.measureKbViewport());
+		},
+		pageByKb: {
+			deep: true,
+			handler() {
+				this.$nextTick(() => this.measureKbViewport());
 			}
 		}
 	},
@@ -263,6 +351,24 @@ export default {
 			const maxPage = this.getTotalPages(kbId);
 			const safePage = Math.min(maxPage, Math.max(1, nextPage));
 			this.pageByKb = { ...this.pageByKb, [kbId]: safePage };
+		},
+		onKbScroll(e) {
+			const d = e && e.detail ? e.detail : {};
+			this.kbScrollTop = Number(d.scrollTop || 0);
+		},
+		measureKbViewport() {
+			const q = uni.createSelectorQuery().in(this);
+			q.select('.kb-scroll').boundingClientRect((rect) => {
+				if (rect && rect.height) this.kbViewportH = rect.height;
+			});
+			q.exec();
+		},
+		estimateKbCardHeight(kb) {
+			const collapsedHeight = 148;
+			if (!this.isKbExpanded(kb.id)) return collapsedHeight;
+			const itemCount = this.getPagedKbItems(kb.id).length;
+			const paginationHeight = this.getTotalPages(kb.id) > 1 ? 44 : 0;
+			return collapsedHeight + itemCount * 76 + paginationHeight + 14;
 		},
 		closeActionMenus() {
 			this.activeKbMenuId = '';
@@ -368,14 +474,8 @@ export default {
 			this.itemModalVisible = false;
 		}
 	},
-	computed: {
-		currentItemKb() {
-			if (!this.itemForm || !this.itemForm.kbId) return { name: '', icon: '📘' };
-			return {
-				name: this.itemForm.kbName || this.getKbById(this.itemForm.kbId).name,
-				icon: this.itemForm.kbIcon || this.getKbById(this.itemForm.kbId).icon || '📘'
-			};
-		}
+	mounted() {
+		this.$nextTick(() => this.measureKbViewport());
 	},
 	beforeUnmount() {
 		if (this.hideTimer) clearTimeout(this.hideTimer);
@@ -416,6 +516,7 @@ export default {
 .panel {
 	width: min(760rpx, 92vw);
 	height: 100%;
+	min-height: 0;
 	background: linear-gradient(180deg, #edf3ff 0%, #e5edf9 100%);
 	display: flex;
 	flex-direction: column;
@@ -478,6 +579,15 @@ export default {
 	flex-shrink: 0;
 }
 
+.header-main {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-left: auto;
+	justify-content: flex-end;
+	min-width: 0;
+}
+
 .header-primary-btn,
 .header-icon-btn {
 	margin: 0;
@@ -524,7 +634,7 @@ export default {
 }
 
 .title {
-	flex: 1;
+	flex: 0 1 auto;
 	min-width: 0;
 	font-size: 15px;
 	font-weight: 600;
@@ -542,8 +652,20 @@ export default {
 
 .kb-scroll {
 	flex: 1;
-	padding: 0 12px 14px;
+	min-height: 0;
+	padding: 12px 12px 14px;
 	box-sizing: border-box;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.kb-virtual-spacer {
+	width: 100%;
+	flex-shrink: 0;
+}
+
+.kb-scroll::-webkit-scrollbar {
+	display: none;
 }
 
 .kb-card {
@@ -947,17 +1069,33 @@ export default {
 
 .ghost-btn {
 	margin: 0;
-	line-height: 1.8;
+	min-height: 40px;
+	height: 40px;
+	line-height: 38px;
+	padding: 0 18px;
 	background: #f4f7fb;
 	color: #333;
 	border-radius: 999px;
 	border: 1px solid rgba(191, 204, 226, 0.75);
 	box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.85);
 	transition: all 0.2s ease;
+	min-width: 96px;
+	font-size: 14px;
+	font-weight: 600;
 }
 
 .ghost-btn::after {
 	border: none;
+}
+
+.action-btn {
+	min-height: 40px;
+	height: 40px;
+	line-height: 38px;
+	padding: 0 18px;
+	min-width: 96px;
+	font-size: 14px;
+	font-weight: 600;
 }
 
 /* #ifdef H5 */
@@ -1030,6 +1168,21 @@ export default {
 		max-height: 92vh;
 		border-radius: 12px 12px 0 0;
 		padding-bottom: calc(12px + env(safe-area-inset-bottom));
+	}
+
+	.modal-actions {
+		justify-content: space-between;
+		gap: 10px;
+	}
+
+	.modal-actions .ghost-btn,
+	.modal-actions .action-btn {
+		flex: 1;
+		min-width: 0;
+		height: 44px;
+		min-height: 44px;
+		line-height: 42px;
+		font-size: 15px;
 	}
 }
 
