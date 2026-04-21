@@ -19,6 +19,26 @@
 					@input="onDescriptionInput"
 				/>
 
+				<text class="label">角色头像</text>
+				<view class="avatar-section">
+					<view class="avatar-preview">
+						<image class="avatar-preview-image" :src="selectedAvatarSrc" mode="aspectFill"></image>
+					</view>
+					<scroll-view class="avatar-scroll" scroll-x :show-scrollbar="false">
+						<view class="avatar-grid">
+							<view
+								v-for="emoji in avatarOptions"
+								:key="`avatar-${emoji}`"
+								class="avatar-option"
+								:class="{ active: formData.avatarPreset === emoji }"
+								@click="onAvatarSelect(emoji)"
+							>
+								<text class="avatar-option-text">{{ emoji }}</text>
+							</view>
+						</view>
+					</scroll-view>
+				</view>
+
 				<text class="label">角色部件（预设）</text>
 				<view class="row">
 					<text class="part-label">🧢 头部</text>
@@ -166,6 +186,8 @@ function createDefaultForm() {
 		id: '',
 		name: '',
 		description: '',
+		avatarPreset: '🤖',
+		avatar: '',
 		avatarParts: {
 			head: headOptions[0].value,
 			body: bodyOptions[0].value,
@@ -202,6 +224,32 @@ export default {
 			kbListViewportH: 0,
 			kbItemH: 56,
 			kbOverscan: 4,
+			avatarOptions: [
+				'🤖',
+				'🧠',
+				'✨',
+				'🛰️',
+				'📘',
+				'🛠️',
+				'🔮',
+				'🧩',
+				'🦊',
+				'🐼',
+				'🐯',
+				'🦁',
+				'🐵',
+				'🐧',
+				'🐬',
+				'🦄',
+				'🌟',
+				'🔥',
+				'⚡',
+				'🌈',
+				'🍀',
+				'🎯',
+				'🎮',
+				'🎧'
+			],
 			headOptions,
 			bodyOptions,
 			legOptions,
@@ -235,6 +283,10 @@ export default {
 		},
 		kbListBottomSpacer() {
 			return Math.max(0, (this.filteredKbs.length - this.kbEndIndex) * this.kbItemH);
+		},
+		selectedAvatarSrc() {
+			if (this.formData.avatar) return this.formData.avatar;
+			return this.buildAvatarDataUrl(this.formData.avatarPreset || '🤖');
 		}
 	},
 	watch: {
@@ -267,6 +319,15 @@ export default {
 		},
 		onDescriptionInput(e) {
 			this.formData.description = e.detail.value;
+		},
+		onAvatarSelect(emoji) {
+			this.formData.avatarPreset = emoji;
+			this.formData.avatar = this.buildAvatarDataUrl(emoji);
+		},
+		buildAvatarDataUrl(emoji) {
+			const icon = emoji || '🤖';
+			const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect x="1" y="1" width="94" height="94" rx="47" fill="#ffffff" stroke="#d5e1fa" stroke-width="2"/><text x="48" y="58" font-size="34" text-anchor="middle">${icon}</text></svg>`;
+			return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 		},
 		onPartSelectChange(part, value) {
 			this.formData.avatarParts[part] = value;
@@ -324,6 +385,7 @@ export default {
 			this.nameError = '';
 			this.$emit('save', {
 				...this.formData,
+				avatar: this.formData.avatar || this.buildAvatarDataUrl(this.formData.avatarPreset || '🤖'),
 				name
 			});
 		}
@@ -418,6 +480,70 @@ export default {
 	font-size: 24rpx;
 	border: 1px solid #dbe2ef;
 	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.avatar-section {
+	display: flex;
+	align-items: center;
+	gap: 14rpx;
+	padding: 8rpx 0 6rpx;
+}
+
+.avatar-preview {
+	width: 88rpx;
+	height: 88rpx;
+	border-radius: 50%;
+	border: 1px solid #d5e1fa;
+	background: #fff;
+	overflow: hidden;
+	flex-shrink: 0;
+}
+
+.avatar-preview-image {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+.avatar-grid {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 8rpx;
+	width: max-content;
+}
+
+.avatar-scroll {
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.avatar-scroll::-webkit-scrollbar {
+	display: none;
+}
+
+.avatar-option {
+	width: 52rpx;
+	height: 52rpx;
+	border-radius: 50%;
+	border: 1px solid #d9e4ff;
+	background: #f4f8ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.avatar-option.active {
+	border-color: #2f6dff;
+	background: #eaf2ff;
+	box-shadow: 0 0 0 2px rgba(47, 109, 255, 0.14);
+}
+
+.avatar-option-text {
+	font-size: 26rpx;
+	line-height: 1;
 }
 
 .row {

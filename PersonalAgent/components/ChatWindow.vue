@@ -23,7 +23,12 @@
 		</view>
 
 		<view v-if="isMobile" class="conversation-bar">
-			<text class="conversation-title">{{ selectedRole ? selectedRole.name : '未选择角色' }}</text>
+			<view class="conversation-title-wrap">
+				<view class="conversation-role-icon">
+					<image class="conversation-role-image" :src="roleAvatarSrc" mode="aspectFill"></image>
+				</view>
+				<text class="conversation-title">{{ selectedRole ? selectedRole.name : '未选择角色' }}</text>
+			</view>
 			<button v-if="canShowClearOnMobileBar" size="mini" class="conversation-clear-btn" @click="$emit('clear-session')">
 				清空对话
 			</button>
@@ -121,6 +126,15 @@ export default {
 	computed: {
 		canShowClearOnMobileBar() {
 			return this.isMobile && !!this.selectedRole && !!this.hasMessages;
+		},
+		roleAvatarSrc() {
+			const role = this.selectedRole || {};
+			return (
+				role.avatarUrl ||
+				role.avatar ||
+				role.iconUrl ||
+				"data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Crect x='1' y='1' width='94' height='94' rx='47' fill='%23ffffff' stroke='%23d5e1fa' stroke-width='2'/%3E%3Ctext x='48' y='58' font-size='34' text-anchor='middle'%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E"
+			);
 		}
 	},
 	watch: {
@@ -430,8 +444,6 @@ export default {
 }
 
 .conversation-title {
-	flex: 1;
-	min-width: 0;
 	font-size: 13px;
 	font-weight: 500;
 	color: #374151;
@@ -439,6 +451,33 @@ export default {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.conversation-title-wrap {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.conversation-role-icon {
+	width: 20px;
+	height: 20px;
+	min-width: 20px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #ffffff;
+	border: 1px solid rgba(47, 109, 255, 0.3);
+	overflow: hidden;
+}
+
+.conversation-role-image {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
 }
 
 .conversation-clear-btn {

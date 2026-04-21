@@ -23,7 +23,7 @@
 				@click="$emit('select', entry.role.id)"
 			>
 				<view class="role-avatar">
-					<text class="role-avatar-text">AI</text>
+					<image class="role-avatar-image" :src="getRoleAvatarSrc(entry.role)" mode="aspectFill"></image>
 				</view>
 				<view class="role-main">
 					<text class="role-name">{{ collapsed ? (entry.role.name || '').slice(0, 1) : entry.role.name }}</text>
@@ -116,6 +116,15 @@ export default {
 		this.$nextTick(() => this.measureRoleViewport());
 	},
 	methods: {
+		getRoleAvatarSrc(role) {
+			const data = role || {};
+			return (
+				data.avatarUrl ||
+				data.avatar ||
+				data.iconUrl ||
+				"data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Crect x='1' y='1' width='94' height='94' rx='47' fill='%23ffffff' stroke='%23d5e1fa' stroke-width='2'/%3E%3Ctext x='48' y='58' font-size='34' text-anchor='middle'%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E"
+			);
+		},
 		toggleRoleMenu(roleId) {
 			this.openMenuRoleId = this.openMenuRoleId === roleId ? '' : roleId;
 		},
@@ -317,13 +326,13 @@ export default {
 	justify-content: center;
 	background: linear-gradient(135deg, #eef3ff 0%, #dfeaff 100%);
 	border: 1px solid #d5e1fa;
+	overflow: hidden;
 }
 
-.role-avatar-text {
-	font-size: 22rpx;
-	font-weight: 700;
-	color: #2f6dff;
-	line-height: 1;
+.role-avatar-image {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
 }
 
 .role-main {
