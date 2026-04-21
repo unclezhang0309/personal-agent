@@ -68,7 +68,6 @@
 						>
 							<view class="item-meta">
 								<text class="item-title">{{ item.title }}</text>
-								<text class="item-content">{{ item.content }}</text>
 							</view>
 							<view class="item-actions">
 								<view class="more-wrap">
@@ -385,7 +384,7 @@ export default {
 			if (!this.isKbExpanded(kb.id)) return collapsedHeight;
 			const itemCount = this.getPagedKbItems(kb.id).length;
 			const paginationHeight = this.getTotalPages(kb.id) > 1 ? 44 : 0;
-			return collapsedHeight + itemCount * 76 + paginationHeight + 14;
+			return collapsedHeight + itemCount * 48 + paginationHeight + 14;
 		},
 		closeActionMenus() {
 			this.activeKbMenuId = '';
@@ -827,6 +826,7 @@ export default {
 	justify-content: space-between;
 	width: 100%;
 	margin: 10px 0 0;
+	height: 40px;
 	padding: 6px 8px;
 	background: #eaf2ff;
 	border: none;
@@ -861,18 +861,23 @@ export default {
 
 .item-row {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
 	padding: 8px 10px 8px 8px;
+	height: 40px;
 	border-radius: 999px;
-	background: #fff;
+	background: #eef4ff;
 	margin-bottom: 8px;
 	box-sizing: border-box;
 	border: none;
 	transition: background 0.2s ease;
 	position: relative;
 	z-index: 1;
+}
+
+.item-row:last-child {
+	margin-bottom: 0;
 }
 
 .item-row.menu-open {
@@ -883,27 +888,18 @@ export default {
 	flex: 1;
 	min-width: 0;
 	display: flex;
-	flex-direction: column;
-	gap: 2px;
+	align-items: center;
+	padding-left: 8px;
+	height: 100%;
 }
 
 .item-title {
-	font-size: 28rpx;
-	font-weight: 600;
+	font-size: 24rpx;
+	font-weight: 400;
 	color: #222;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.item-content {
-	font-size: 22rpx;
-	color: #6b7280;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
 }
 
 .item-empty {
@@ -944,10 +940,10 @@ export default {
 
 .add-item-btn {
 	margin: 0;
-	height: 30px;
-	min-height: 30px;
-	width: 30px;
-	min-width: 30px;
+	height: 26px;
+	min-height: 26px;
+	width: 26px;
+	min-width: 26px;
 	padding: 0;
 	display: inline-flex;
 	align-items: center;
@@ -966,7 +962,7 @@ export default {
 }
 
 .plus-text {
-	font-size: 18px;
+	font-size: 16px;
 	font-weight: 600;
 	line-height: 1;
 	transform: translateY(-1px);
@@ -1173,7 +1169,7 @@ export default {
 }
 
 .item-row:hover {
-	background: #fbfdff;
+	background: #e6efff;
 }
 
 .action:hover {

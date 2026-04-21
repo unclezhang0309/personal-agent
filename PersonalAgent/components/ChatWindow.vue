@@ -2,25 +2,31 @@
 	<view class="chat-window" :class="{ 'chat-window--web': !isMobile, 'chat-window--mobile': isMobile }">
 		<view class="chat-header">
 			<view class="left">
-				<button v-if="isMobile" size="mini" class="header-secondary-btn" @click="$emit('toggle-sidebar')">角色</button>
+				<button v-if="isMobile" size="mini" class="composer-settings-btn header-nav-btn" @click="$emit('toggle-sidebar')">
+					<uni-icons type="person-filled" size="12" color="#2f6dff"></uni-icons>
+					<text>角色</text>
+				</button>
 				<text v-if="!isMobile" class="title">{{ selectedRole ? selectedRole.name : '未选择角色' }}</text>
 			</view>
 			<view class="right">
-				<button v-if="showClearInHeader" size="mini" class="header-secondary-btn" @click="$emit('clear-session')">清空对话</button>
+				<button v-if="showClearInHeader" size="mini" class="clear-ghost-btn" @click="$emit('clear-session')">清空对话</button>
 				<button
 					v-if="showKbButton"
 					size="mini"
-					:class="isMobile ? 'header-secondary-btn' : 'header-primary-btn'"
+					class="composer-settings-btn header-nav-btn"
 					@click="$emit('open-kb')"
 				>
-					知识库
+					<text class="header-nav-emoji">📚</text>
+					<text>知识库</text>
 				</button>
 			</view>
 		</view>
 
 		<view v-if="isMobile" class="conversation-bar">
 			<text class="conversation-title">{{ selectedRole ? selectedRole.name : '未选择角色' }}</text>
-			<button v-if="canShowClearOnMobileBar" size="mini" class="header-secondary-btn" @click="$emit('clear-session')">清空对话</button>
+			<button v-if="canShowClearOnMobileBar" size="mini" class="conversation-clear-btn" @click="$emit('clear-session')">
+				清空对话
+			</button>
 		</view>
 
 		<scroll-view
@@ -410,29 +416,69 @@ export default {
 }
 
 .conversation-bar {
-	flex: 0 0 56px;
-	height: 56px;
-	min-height: 56px;
+	flex: 0 0 42px;
+	height: 42px;
+	min-height: 42px;
 	padding: 0 12px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
-	border-bottom: 1px solid #e6ebf5;
-	background: rgba(255, 255, 255, 0.86);
+	background: linear-gradient(180deg, rgba(232, 240, 255, 0.9) 0%, rgba(224, 235, 255, 0.86) 100%);
+	backdrop-filter: blur(6px);
 	box-sizing: border-box;
 }
 
 .conversation-title {
 	flex: 1;
 	min-width: 0;
-	font-size: 15px;
-	font-weight: 600;
-	color: #111827;
+	font-size: 13px;
+	font-weight: 500;
+	color: #374151;
 	line-height: 1.25;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.conversation-clear-btn {
+	margin: 0;
+	height: 24px;
+	min-height: 24px;
+	line-height: 22px;
+	padding: 0 10px;
+	font-size: 12px;
+	font-weight: 500;
+	color: #4b5563;
+	background: rgba(248, 250, 252, 0.92);
+	border: 1px solid #d9e1ee;
+	border-radius: 999px;
+	box-sizing: border-box;
+	transition: all 0.2s ease;
+}
+
+.conversation-clear-btn::after {
+	border: none;
+}
+
+.clear-ghost-btn {
+	margin: 0;
+	min-height: 28px;
+	height: 28px;
+	line-height: 26px;
+	padding: 0 12px;
+	font-size: 13px;
+	font-weight: 500;
+	box-sizing: border-box;
+	background: rgba(248, 250, 252, 0.46);
+	color: #4b5563;
+	border-radius: 999px;
+	border: 1px solid rgba(191, 204, 226, 0.68);
+	transition: all 0.2s ease;
+}
+
+.clear-ghost-btn::after {
+	border: none;
 }
 
 .empty {
@@ -610,6 +656,18 @@ export default {
 	border: none;
 }
 
+.header-nav-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+}
+
+.header-nav-emoji {
+	font-size: 12px;
+	line-height: 1;
+}
+
 .send-btn {
 	margin: 0;
 	box-sizing: border-box;
@@ -658,8 +716,15 @@ export default {
 }
 
 .header-secondary-btn:hover,
+.clear-ghost-btn:hover,
 .composer-settings-btn:hover,
 .clear-btn:hover {
+	border-color: #cfd8e8;
+	background: #ffffff;
+}
+
+.conversation-clear-btn:hover {
+	color: #374151;
 	border-color: #cfd8e8;
 	background: #ffffff;
 }
