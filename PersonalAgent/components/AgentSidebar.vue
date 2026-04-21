@@ -1,5 +1,5 @@
 <template>
-	<view class="sidebar" :class="{ collapsed }">
+	<view class="sidebar" :class="{ collapsed }" @click="closeMenus">
 		<view class="sidebar-header">
 			<text v-if="!collapsed" class="title">我的智能体</text>
 			<view class="header-actions">
@@ -14,16 +14,24 @@
 				v-for="role in roles"
 				:key="role.id"
 				class="role-item"
-				:class="{ active: role.id === selectedRoleId }"
+				:class="{ active: role.id === selectedRoleId, 'menu-open': openMenuRoleId === role.id }"
 				@click="$emit('select', role.id)"
 			>
+				<view class="role-avatar">
+					<text class="role-avatar-text">AI</text>
+				</view>
 				<view class="role-main">
 					<text class="role-name">{{ collapsed ? (role.name || '').slice(0, 1) : role.name }}</text>
 					<text v-if="!collapsed" class="role-kb">绑定 {{ (role.boundKbIds || []).length }} 个知识库</text>
 				</view>
 				<view v-if="!collapsed" class="role-actions">
-					<text class="action" @click.stop="$emit('edit', role)">编辑</text>
-					<text class="action danger" @click.stop="$emit('delete', role.id)">删除</text>
+					<view class="more-wrap">
+						<button class="more-btn" size="mini" @click.stop="toggleRoleMenu(role.id)">⋯</button>
+						<view v-if="openMenuRoleId === role.id" class="item-menu">
+							<text class="menu-item" @click.stop="onEdit(role)">编辑</text>
+							<text class="menu-item danger" @click.stop="onDelete(role.id)">删除</text>
+						</view>
+					</view>
 				</view>
 			</view>
 			<view v-if="roles.length === 0" class="empty">还没有角色，点击“新建”开始</view>
@@ -47,6 +55,27 @@ export default {
 			type: Boolean,
 			default: false
 		}
+	},
+	data() {
+		return {
+			openMenuRoleId: ''
+		};
+	},
+	methods: {
+		toggleRoleMenu(roleId) {
+			this.openMenuRoleId = this.openMenuRoleId === roleId ? '' : roleId;
+		},
+		closeMenus() {
+			this.openMenuRoleId = '';
+		},
+		onEdit(role) {
+			this.openMenuRoleId = '';
+			this.$emit('edit', role);
+		},
+		onDelete(roleId) {
+			this.openMenuRoleId = '';
+			this.$emit('delete', roleId);
+		}
 	}
 };
 </script>
@@ -57,8 +86,8 @@ export default {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background: #f8f9fb;
-	border-right: 1px solid #eceff4;
+	background: linear-gradient(180deg, #eef3ff 0%, #e6edf9 100%);
+	border-right: 1px solid #e6ebf5;
 	min-width: 0;
 	box-sizing: border-box;
 	overflow: hidden;
@@ -75,7 +104,9 @@ export default {
 	padding: 0 12px;
 	gap: 8px;
 	flex-wrap: nowrap;
-	border-bottom: 1px solid #ececec;
+	border-bottom: 1px solid #e6ebf5;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(8px);
 }
 
 .header-actions {
@@ -103,6 +134,7 @@ export default {
 	margin: 0;
 	box-sizing: border-box;
 	flex-shrink: 0;
+	transition: all 0.2s ease;
 }
 
 .header-primary-btn {
@@ -112,11 +144,16 @@ export default {
 	padding: 0 12px;
 	font-size: 13px;
 	font-weight: 500;
-	border-radius: 6px;
-	background: #2f6dff;
+	border-radius: 999px;
+	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
 	color: #fff;
-	border: 1px solid #2f6dff;
+	border: 1px solid rgba(36, 94, 226, 0.95);
 	white-space: nowrap;
+	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+}
+
+.header-primary-btn::after {
+	border: none;
 }
 
 .header-icon-btn {
@@ -128,8 +165,13 @@ export default {
 	align-items: center;
 	justify-content: center;
 	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 6px;
+	border: 1px solid rgba(191, 204, 226, 0.75);
+	border-radius: 999px;
+	box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.8);
+}
+
+.header-icon-btn::after {
+	border: none;
 }
 
 .role-list {
@@ -142,24 +184,58 @@ export default {
 
 .role-item {
 	width: 100%;
-	background: #fff;
-	border-radius: 12rpx;
-	padding: 16rpx;
-	margin-bottom: 12rpx;
-	border: 1px solid transparent;
+	background: rgba(255, 255, 255, 0.96);
+	border-radius: 999rpx;
+	padding: 14rpx;
+	margin-bottom: 14rpx;
+	border: none;
 	box-sizing: border-box;
-	overflow: hidden;
+	overflow: visible;
+	box-shadow: none;
+	transition: box-shadow 0.22s ease, background 0.22s ease;
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	position: relative;
+	z-index: 1;
+	min-height: 100rpx;
 }
 
 .role-item.active {
-	border-color: #3c7cff;
-	box-shadow: 0 0 0 1px rgba(60, 124, 255, 0.15);
+	border: 1px solid #9cc0ff;
+	box-shadow: 0 10px 26px rgba(47, 109, 255, 0.12);
+	background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+}
+
+.role-item.menu-open {
+	z-index: 50;
+}
+
+.role-avatar {
+	flex-shrink: 0;
+	width: 72rpx;
+	height: 72rpx;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #eef3ff 0%, #dfeaff 100%);
+	border: 1px solid #d5e1fa;
+}
+
+.role-avatar-text {
+	font-size: 22rpx;
+	font-weight: 700;
+	color: #2f6dff;
+	line-height: 1;
 }
 
 .role-main {
 	display: flex;
 	flex-direction: column;
 	gap: 6rpx;
+	flex: 1;
+	min-width: 0;
 }
 
 .role-name {
@@ -174,32 +250,87 @@ export default {
 .role-kb {
 	display: block;
 	font-size: 22rpx;
-	color: #777;
+	color: #6b7280;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
 .role-actions {
+	margin-left: auto;
+	align-self: flex-start;
+	position: relative;
+	z-index: 3;
+}
+
+.more-wrap {
+	position: relative;
+}
+
+.more-btn {
+	margin: 0;
+	width: 24px;
+	height: 24px;
+	min-width: 24px;
+	padding: 0;
+	line-height: 1;
+	font-size: 18px;
+	font-weight: 600;
+	color: #6b7280;
+	background: #f6f8fc;
+	border: 1px solid #e3e9f4;
+	border-radius: 999px;
 	display: flex;
-	flex-wrap: wrap;
-	gap: 16rpx;
-	margin-top: 10rpx;
+	align-items: center;
+	justify-content: center;
+}
+
+.item-menu {
+	position: absolute;
+	top: calc(100% + 12rpx);
+	right: 0;
+	min-width: 116rpx;
+	background: #fff;
+	border: 1px solid #e6ecf7;
+	border-radius: 16rpx;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+	overflow: hidden;
+	z-index: 120;
+}
+
+.menu-item {
+	display: block;
+	padding: 12rpx 16rpx;
+	font-size: 22rpx;
+	color: #2f6dff;
+	background: #fff;
 }
 
 .action {
 	font-size: 22rpx;
 	color: #2f6dff;
+	font-weight: 500;
+	transition: opacity 0.2s ease;
 }
 
 .action.danger {
-	color: #e74c3c;
+	color: #ef4444;
+}
+
+.menu-item.danger {
+	color: #ef4444;
 }
 
 .empty {
-	padding: 20rpx;
+	padding: 16rpx 14rpx;
 	font-size: 24rpx;
-	color: #888;
+	color: #74809a;
+	margin-top: 14rpx;
+	background: rgba(255, 255, 255, 0.72);
+	border: 1px solid #e6ecf7;
+	border-radius: 999rpx;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+	text-align: center;
 }
 
 .sidebar.collapsed .sidebar-header {
@@ -216,10 +347,12 @@ export default {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	gap: 0;
 }
 
 .sidebar.collapsed .role-main {
 	align-items: center;
+	flex: none;
 }
 
 .sidebar.collapsed .role-name {
@@ -228,9 +361,59 @@ export default {
 	line-height: 44rpx;
 	text-align: center;
 	border-radius: 50%;
-	background: #eef3ff;
+	background: #edf3ff;
 	font-size: 24rpx;
 }
+
+.sidebar.collapsed .role-avatar {
+	display: none;
+}
+
+/* #ifdef H5 */
+.header-primary-btn:hover {
+	filter: brightness(1.03);
+}
+
+.header-icon-btn:hover {
+	background: #f9fbff;
+	border-color: #cfd9eb;
+}
+
+.role-item:hover {
+	animation: roleItemHoverTint 0.22s ease both;
+}
+
+.role-item.active:hover {
+	box-shadow: 0 12px 28px rgba(47, 109, 255, 0.16);
+}
+
+.role-item:not(.active):hover {
+	background: #f9fbff;
+	box-shadow: none;
+}
+
+.more-btn:hover {
+	background: #ffffff;
+	border-color: #cfd8e8;
+}
+
+.menu-item:hover {
+	background: #f7faff;
+}
+
+.action:hover {
+	opacity: 0.86;
+}
+
+@keyframes roleItemHoverTint {
+	from {
+		background: rgba(255, 255, 255, 0.96);
+	}
+	to {
+		background: #f9fbff;
+	}
+}
+/* #endif */
 
 .sidebar.collapsed .empty {
 	padding: 12rpx 6rpx;

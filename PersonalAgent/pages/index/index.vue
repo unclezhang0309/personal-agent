@@ -417,7 +417,7 @@ export default {
 <style scoped>
 .page {
 	width: 100vw;
-	background: #fff;
+	background: linear-gradient(180deg, #f7f9ff 0%, #f3f6fb 100%);
 	overflow: hidden;
 	--agent-panel-width: min(240px, calc(86vw * 2 / 3));
 	--side-panel-collapsed: 96rpx;
@@ -450,7 +450,7 @@ export default {
 	overflow: hidden;
 	padding: 0;
 	box-sizing: border-box;
-	background: #fff;
+	background: transparent;
 }
 
 .chat-shell {
@@ -464,8 +464,8 @@ export default {
 	width: var(--side-panel-collapsed);
 	height: 100%;
 	transition: width 0.2s ease;
-	border-left: 1px solid #eceff4;
-	background: #f8f9fb;
+	border-left: 1px solid #e6ebf5;
+	background: linear-gradient(180deg, #f7f9ff 0%, #f3f6fb 100%);
 	box-sizing: border-box;
 	overflow: hidden;
 	flex-shrink: 0;
@@ -498,6 +498,10 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	background: #ffffff;
+	border: 1px solid #dfe6f3;
+	border-radius: 10px;
+	box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
 }
 
 .mobile-sidebar-overlay {
@@ -518,7 +522,7 @@ export default {
 	width: var(--agent-panel-width);
 	max-width: 86vw;
 	height: 100%;
-	background: #f8f9fb;
+	background: linear-gradient(180deg, #f7f9ff 0%, #f3f6fb 100%);
 	overflow: hidden;
 	transition: width 0.2s ease;
 	transform: translateX(-100%);
@@ -555,22 +559,24 @@ export default {
 	top: 0;
 	bottom: 0;
 	z-index: 2200;
-	background: rgba(0, 0, 0, 0.45);
+	background: rgba(15, 23, 42, 0.42);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	padding: 24px;
 	box-sizing: border-box;
+	backdrop-filter: blur(2px);
 }
 
 .delete-role-dialog {
 	width: 100%;
 	max-width: 320px;
 	background: #fff;
-	border-radius: 12px;
+	border-radius: 14px;
 	padding: 20px;
 	box-sizing: border-box;
-	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+	border: 1px solid #e8edf7;
 }
 
 .delete-role-title {
@@ -585,7 +591,7 @@ export default {
 	display: block;
 	font-size: 14px;
 	line-height: 1.5;
-	color: #555;
+	color: #667085;
 	margin-bottom: 20px;
 }
 
@@ -599,15 +605,35 @@ export default {
 	margin: 0;
 	line-height: 1.9;
 	min-width: 72px;
+	border-radius: 8px;
+	transition: all 0.2s ease;
 }
 
 .delete-role-btn.cancel {
-	background: #f1f4fa;
+	background: #f4f7fb;
 	color: #333;
+	border: 1px solid #e3e9f4;
 }
 
 .delete-role-btn.danger {
-	background: #ef4444;
+	background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 	color: #fff;
+	box-shadow: 0 6px 14px rgba(239, 68, 68, 0.2);
 }
+
+/* #ifdef H5 */
+.kb-dock-btn:hover {
+	border-color: #cfd9eb;
+	background: #f9fbff;
+}
+
+.delete-role-btn.cancel:hover {
+	background: #fff;
+	border-color: #cfd8e8;
+}
+
+.delete-role-btn.danger:hover {
+	filter: brightness(1.03);
+}
+/* #endif */
 </style>

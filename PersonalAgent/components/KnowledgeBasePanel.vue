@@ -11,8 +11,8 @@
 				</view>
 			</view>
 
-			<scroll-view v-if="!collapsed" class="kb-scroll" scroll-y>
-				<view v-for="kb in kbs" :key="kb.id" class="kb-card">
+			<scroll-view v-if="!collapsed" class="kb-scroll" scroll-y @click="closeActionMenus">
+				<view v-for="kb in kbs" :key="kb.id" class="kb-card" :class="{ 'menu-open': activeKbMenuId === kb.id }">
 					<view class="kb-head">
 						<view class="kb-title-wrap">
 							<text class="kb-icon">{{ kb.icon || '📘' }}</text>
@@ -22,8 +22,13 @@
 							</view>
 						</view>
 						<view class="kb-actions">
-							<text class="action" @click="openEditKb(kb)">编辑</text>
-							<text class="action danger" @click="$emit('delete-kb', kb.id)">删除</text>
+							<view class="more-wrap">
+								<button class="more-btn" size="mini" @click.stop="toggleKbMenu(kb.id)">⋯</button>
+								<view v-if="activeKbMenuId === kb.id" class="item-menu">
+									<text class="menu-item" @click.stop="onEditKb(kb)">编辑</text>
+									<text class="menu-item danger" @click.stop="onDeleteKb(kb.id)">删除</text>
+								</view>
+							</view>
 						</view>
 					</view>
 					<view class="kb-subline" @click="toggleKbItems(kb.id)">
@@ -37,14 +42,24 @@
 					</view>
 
 					<view v-if="isKbExpanded(kb.id)">
-						<view v-for="item in getPagedKbItems(kb.id)" :key="item.id" class="item-row">
+						<view
+							v-for="item in getPagedKbItems(kb.id)"
+							:key="item.id"
+							class="item-row"
+							:class="{ 'menu-open': activeItemMenuId === item.id }"
+						>
 							<view class="item-meta">
 								<text class="item-title">{{ item.title }}</text>
 								<text class="item-content">{{ item.content }}</text>
 							</view>
 							<view class="item-actions">
-								<text class="action" @click="openEditItem(item)">编辑</text>
-								<text class="action danger" @click="$emit('delete-item', item.id)">删除</text>
+								<view class="more-wrap">
+									<button class="more-btn" size="mini" @click.stop="toggleItemMenu(item.id)">⋯</button>
+									<view v-if="activeItemMenuId === item.id" class="item-menu">
+										<text class="menu-item" @click.stop="onEditItem(item)">编辑</text>
+										<text class="menu-item danger" @click.stop="onDeleteItem(item.id)">删除</text>
+									</view>
+								</view>
 							</view>
 						</view>
 
@@ -168,7 +183,9 @@ export default {
 			pageSize: 3,
 			rendered: false,
 			panelActive: false,
-			hideTimer: null
+			hideTimer: null,
+			activeKbMenuId: '',
+			activeItemMenuId: ''
 		};
 	},
 	watch: {
@@ -198,6 +215,7 @@ export default {
 			}, 220);
 		},
 		onOverlayClick() {
+			this.closeActionMenus();
 			// 移动端抽屉模式：点击黑色透明区域关闭
 			if (this.isMobile && !this.inline) {
 				this.$emit('close');
@@ -246,13 +264,43 @@ export default {
 			const safePage = Math.min(maxPage, Math.max(1, nextPage));
 			this.pageByKb = { ...this.pageByKb, [kbId]: safePage };
 		},
+		closeActionMenus() {
+			this.activeKbMenuId = '';
+			this.activeItemMenuId = '';
+		},
+		toggleKbMenu(kbId) {
+			this.activeItemMenuId = '';
+			this.activeKbMenuId = this.activeKbMenuId === kbId ? '' : kbId;
+		},
+		toggleItemMenu(itemId) {
+			this.activeKbMenuId = '';
+			this.activeItemMenuId = this.activeItemMenuId === itemId ? '' : itemId;
+		},
+		onEditKb(kb) {
+			this.closeActionMenus();
+			this.openEditKb(kb);
+		},
+		onDeleteKb(kbId) {
+			this.closeActionMenus();
+			this.$emit('delete-kb', kbId);
+		},
+		onEditItem(item) {
+			this.closeActionMenus();
+			this.openEditItem(item);
+		},
+		onDeleteItem(itemId) {
+			this.closeActionMenus();
+			this.$emit('delete-item', itemId);
+		},
 		openCreateKb() {
+			this.closeActionMenus();
 			this.kbModalMode = 'create';
 			this.kbFormError = '';
 			this.kbForm = { id: '', name: '', icon: '📘', description: '' };
 			this.kbModalVisible = true;
 		},
 		openEditKb(kb) {
+			this.closeActionMenus();
 			this.kbModalMode = 'edit';
 			this.kbFormError = '';
 			this.kbForm = {
@@ -280,6 +328,7 @@ export default {
 			this.kbModalVisible = false;
 		},
 		openCreateItem(kbId) {
+			this.closeActionMenus();
 			this.itemModalMode = 'create';
 			this.itemFormError = '';
 			const kb = this.getKbById(kbId);
@@ -287,6 +336,7 @@ export default {
 			this.itemModalVisible = true;
 		},
 		openEditItem(item) {
+			this.closeActionMenus();
 			this.itemModalMode = 'edit';
 			this.itemFormError = '';
 			const kb = this.getKbById(item.kbId);
@@ -366,12 +416,14 @@ export default {
 .panel {
 	width: min(760rpx, 92vw);
 	height: 100%;
-	background: #f8f9fb;
+	background: linear-gradient(180deg, #edf3ff 0%, #e5edf9 100%);
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 	pointer-events: auto;
 	box-sizing: border-box;
+	border-left: 1px solid #e6ebf5;
+	box-shadow: -10px 0 30px rgba(15, 23, 42, 0.08);
 }
 
 .panel.mobile {
@@ -403,12 +455,14 @@ export default {
 	min-height: 56px;
 	box-sizing: border-box;
 	padding: 0 12px;
-	border-bottom: 1px solid #ececec;
+	border-bottom: 1px solid #e6ebf5;
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
 	gap: 8px;
 	min-width: 0;
+	background: rgba(255, 255, 255, 0.7);
+	backdrop-filter: blur(8px);
 }
 
 .panel.collapsed .header {
@@ -429,6 +483,7 @@ export default {
 	margin: 0;
 	box-sizing: border-box;
 	flex-shrink: 0;
+	transition: all 0.2s ease;
 }
 
 .header-primary-btn {
@@ -438,11 +493,16 @@ export default {
 	padding: 0 12px;
 	font-size: 13px;
 	font-weight: 500;
-	border-radius: 6px;
-	background: #2f6dff;
+	border-radius: 999px;
+	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
 	color: #fff;
-	border: 1px solid #2f6dff;
+	border: 1px solid rgba(36, 94, 226, 0.95);
 	white-space: nowrap;
+	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+}
+
+.header-primary-btn::after {
+	border: none;
 }
 
 .header-icon-btn {
@@ -454,8 +514,13 @@ export default {
 	align-items: center;
 	justify-content: center;
 	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 6px;
+	border: 1px solid rgba(191, 204, 226, 0.75);
+	border-radius: 999px;
+	box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.8);
+}
+
+.header-icon-btn::after {
+	border: none;
 }
 
 .title {
@@ -482,12 +547,21 @@ export default {
 }
 
 .kb-card {
-	background: #fff;
-	border: 1px solid #eceff4;
-	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.96);
+	border: none;
+	border-radius: 24px;
 	padding: 10px 12px 10px 10px;
-	margin-bottom: 10px;
+	margin-bottom: 12px;
 	box-sizing: border-box;
+	overflow: visible;
+	box-shadow: none;
+	transition: background 0.2s ease;
+	position: relative;
+	z-index: 1;
+}
+
+.kb-card.menu-open {
+	z-index: 50;
 }
 
 .kb-head {
@@ -526,25 +600,75 @@ export default {
 
 .kb-actions,
 .item-actions {
+	margin-left: auto;
 	display: flex;
-	gap: 10px;
 	align-items: center;
-	flex-shrink: 0;
-	padding-right: 2px;
+	align-self: flex-start;
+	position: relative;
+	z-index: 4;
+}
+
+.more-wrap {
+	position: relative;
+}
+
+.more-btn {
+	margin: 0;
+	width: 24px;
+	height: 24px;
+	min-width: 24px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 18px;
+	line-height: 1;
+	color: #6b7280;
+	background: #f6f8fc;
+	border: 1px solid #e3e9f4;
+	border-radius: 999px;
+}
+
+.item-menu {
+	position: absolute;
+	top: calc(100% + 10px);
+	right: 0;
+	min-width: 86px;
+	background: #fff;
+	border: 1px solid #e6ecf7;
+	border-radius: 14px;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+	overflow: hidden;
+	z-index: 120;
+}
+
+.menu-item {
+	display: block;
+	padding: 6px 10px;
+	font-size: 12px;
+	color: #2f6dff;
+	background: #fff;
+	white-space: nowrap;
 }
 
 .action {
 	font-size: 22rpx;
 	color: #2f6dff;
+	font-weight: 500;
+	transition: opacity 0.2s ease, color 0.2s ease;
 }
 
 .danger {
-	color: #e74c3c;
+	color: #ef4444;
+}
+
+.menu-item.danger {
+	color: #ef4444;
 }
 
 .kb-desc {
 	font-size: 22rpx;
-	color: #777;
+	color: #6b7280;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -556,11 +680,12 @@ export default {
 	justify-content: space-between;
 	margin: 8px 2px 8px 0;
 	padding: 6px 8px;
-	background: #ffffff;
-	border: 1px solid #eceff4;
-	border-radius: 8px;
+	background: #f8faff;
+	border: none;
+	border-radius: 999px;
 	box-sizing: border-box;
 	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 .subline-left {
@@ -578,7 +703,7 @@ export default {
 
 .count {
 	font-size: 22rpx;
-	color: #777;
+	color: #667085;
 }
 
 .item-row {
@@ -587,10 +712,18 @@ export default {
 	justify-content: space-between;
 	gap: 8px;
 	padding: 8px 10px 8px 8px;
-	border-radius: 8px;
+	border-radius: 999px;
 	background: #fff;
 	margin-bottom: 8px;
 	box-sizing: border-box;
+	border: none;
+	transition: background 0.2s ease;
+	position: relative;
+	z-index: 1;
+}
+
+.item-row.menu-open {
+	z-index: 55;
 }
 
 .item-meta {
@@ -612,7 +745,7 @@ export default {
 
 .item-content {
 	font-size: 22rpx;
-	color: #777;
+	color: #6b7280;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
@@ -648,22 +781,33 @@ export default {
 
 .action-btn {
 	margin: 0;
-	background: #2f6dff;
+	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
 	color: #fff;
 	line-height: 1.8;
+	border-radius: 999px;
+	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.2);
+	transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .add-item-btn {
 	margin: 0;
 	font-size: 22rpx;
 	line-height: 1.8;
-	background: #eef3ff;
+	background: #edf3ff;
 	color: #2f6dff;
+	border-radius: 999px;
+	border: 1px solid #d9e4ff;
+	transition: all 0.2s ease;
 }
 
 .empty {
-	padding: 20px 10px;
-	color: #888;
+	padding: 16px 14px;
+	margin-top: 14px;
+	background: rgba(255, 255, 255, 0.7);
+	border: 1px solid #e6ecf7;
+	border-radius: 999px;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+	color: #74809a;
 	font-size: 24rpx;
 	text-align: center;
 }
@@ -687,25 +831,29 @@ export default {
 	margin: 0;
 	font-size: 22rpx;
 	line-height: 1.7;
-	background: #f3f4f6;
+	background: #f6f8fc;
 	color: #374151;
+	border-radius: 999px;
+	border: 1px solid #e4e9f3;
+	transition: all 0.2s ease;
 }
 
 .page-text {
 	font-size: 22rpx;
-	color: #777;
+	color: #6b7280;
 }
 
 .sub-overlay {
 	position: fixed;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.35);
+	background: rgba(15, 23, 42, 0.42);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	z-index: 1250;
 	padding: 12px;
 	box-sizing: border-box;
+	backdrop-filter: blur(2px);
 }
 
 .modal-card {
@@ -713,9 +861,11 @@ export default {
 	max-height: calc(100vh - 24px);
 	overflow-y: auto;
 	background: #fff;
-	border-radius: 12px;
+	border-radius: 24px;
 	padding: 12px;
 	box-sizing: border-box;
+	border: 1px solid #e8edf7;
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
 }
 
 .modal-card .input,
@@ -728,25 +878,27 @@ export default {
 	height: 40px;
 	min-height: 40px;
 	background: #fff;
-	border: 1px solid #dcdfe6;
-	border-radius: 8px;
+	border: 1px solid #dbe2ef;
+	border-radius: 999px;
 	padding: 0 10px;
 	box-sizing: border-box;
 	margin-bottom: 8px;
 	font-size: 14px;
 	line-height: 40px;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .modal-textarea {
 	width: 100%;
 	min-height: 88px;
 	background: #fff;
-	border: 1px solid #dcdfe6;
-	border-radius: 8px;
+	border: 1px solid #dbe2ef;
+	border-radius: 22px;
 	padding: 8px 10px;
 	box-sizing: border-box;
 	margin-bottom: 8px;
 	font-size: 14px;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .modal-textarea.large {
@@ -764,8 +916,8 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	background: #f5f7fb;
-	border-radius: 8px;
+	background: #f6f9ff;
+	border-radius: 999px;
 	padding: 8px 10px;
 	margin-bottom: 10px;
 }
@@ -796,9 +948,76 @@ export default {
 .ghost-btn {
 	margin: 0;
 	line-height: 1.8;
-	background: #f1f3f6;
+	background: #f4f7fb;
 	color: #333;
+	border-radius: 999px;
+	border: 1px solid rgba(191, 204, 226, 0.75);
+	box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.85);
+	transition: all 0.2s ease;
 }
+
+.ghost-btn::after {
+	border: none;
+}
+
+/* #ifdef H5 */
+.header-icon-btn:hover {
+	border-color: #cfd9eb;
+	background: #f9fbff;
+}
+
+.header-primary-btn:hover,
+.action-btn:hover {
+	filter: brightness(1.03);
+}
+
+.header-primary-btn:active,
+.action-btn:active {
+	transform: translateY(1px);
+}
+
+.kb-card:hover {
+	background: #f9fbff;
+}
+
+.kb-subline:hover {
+	background: #f2f7ff;
+}
+
+.item-row:hover {
+	background: #fbfdff;
+}
+
+.action:hover {
+	opacity: 0.86;
+}
+
+.more-btn:hover {
+	background: #ffffff;
+	border-color: #cfd8e8;
+}
+
+.menu-item:hover {
+	background: #f7faff;
+}
+
+.danger:hover {
+	color: #dc2626;
+}
+
+.page-btn:hover,
+.ghost-btn:hover,
+.add-item-btn:hover {
+	background: #ffffff;
+	border-color: #cfd8e8;
+}
+
+.modal-input:focus,
+.modal-textarea:focus {
+	border-color: #bfd4ff;
+	box-shadow: 0 0 0 3px rgba(47, 109, 255, 0.12);
+}
+/* #endif */
 
 @media (max-width: 768px) {
 	.sub-overlay {

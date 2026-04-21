@@ -250,31 +250,37 @@ export default {
 .overlay {
 	position: fixed;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.45);
+	background: rgba(15, 23, 42, 0.42);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	z-index: 1800;
 	padding: 24rpx;
 	box-sizing: border-box;
+	backdrop-filter: blur(2px);
 }
 
 .panel {
 	width: min(760rpx, 96vw);
 	max-height: 88vh;
 	background: #fff;
-	border-radius: 20rpx;
+	border-radius: 22rpx;
 	display: flex;
 	flex-direction: column;
 	box-sizing: border-box;
+	border: 1px solid #e8edf7;
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+	overflow: hidden;
 }
 
 .header {
 	padding: 22rpx;
-	border-bottom: 1px solid #efefef;
+	border-bottom: 1px solid #e6ebf5;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(8px);
 }
 
 .title {
@@ -283,7 +289,7 @@ export default {
 }
 
 .close {
-	color: #666;
+	color: #637086;
 	font-size: 24rpx;
 }
 
@@ -295,17 +301,18 @@ export default {
 .label {
 	display: block;
 	font-size: 24rpx;
-	color: #666;
+	color: #5f6b80;
 	margin: 14rpx 0 10rpx;
 }
 
 .input {
 	height: 72rpx;
-	background: #f8f9fb;
-	border-radius: 12rpx;
+	background: #f9fbff;
+	border-radius: 999rpx;
 	padding: 0 20rpx;
-	border: 1px solid transparent;
+	border: 1px solid #dbe2ef;
 	box-sizing: border-box;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .input--error {
@@ -324,11 +331,13 @@ export default {
 .textarea {
 	width: 100%;
 	min-height: 140rpx;
-	background: #f8f9fb;
-	border-radius: 12rpx;
+	background: #f9fbff;
+	border-radius: 24rpx;
 	padding: 14rpx 20rpx;
 	box-sizing: border-box;
 	font-size: 24rpx;
+	border: 1px solid #dbe2ef;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .row {
@@ -351,14 +360,15 @@ export default {
 .part-card {
 	height: 72rpx;
 	margin: 0 2rpx;
-	background: #f2f5fb;
-	border-radius: 12rpx;
+	background: #f4f7ff;
+	border-radius: 999rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	font-size: 24rpx;
 	color: #2f6dff;
 	font-weight: 500;
+	border: 1px solid #dbe6fb;
 }
 
 .kb-list {
@@ -373,6 +383,11 @@ export default {
 	align-items: center;
 	gap: 10rpx;
 	font-size: 24rpx;
+	background: rgba(255, 255, 255, 0.92);
+	border: 1px solid #e5ebf6;
+	border-radius: 999rpx;
+	padding: 12rpx 14rpx;
+	box-sizing: border-box;
 }
 
 .hint {
@@ -381,7 +396,7 @@ export default {
 }
 
 .footer {
-	border-top: 1px solid #efefef;
+	border-top: 1px solid #e6ebf5;
 	padding: 18rpx 22rpx;
 	display: flex;
 	justify-content: flex-end;
@@ -392,17 +407,44 @@ export default {
 	margin: 0;
 	line-height: 1.9;
 	font-size: 24rpx;
+	border-radius: 999px;
+	transition: all 0.2s ease;
 }
 
 .btn.ghost {
-	background: #f3f4f8;
+	background: #f4f7fb;
 	color: #333;
+	border: 1px solid rgba(191, 204, 226, 0.75);
+	box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.85);
+}
+
+.btn.ghost::after {
+	border: none;
 }
 
 .btn.primary {
-	background: #2f6dff;
+	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
 	color: #fff;
+	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.2);
 }
+
+/* #ifdef H5 */
+.input:focus,
+.textarea:focus {
+	background: #fff;
+	border-color: #bfd4ff;
+	box-shadow: 0 0 0 3px rgba(47, 109, 255, 0.12);
+}
+
+.btn.primary:hover {
+	filter: brightness(1.03);
+}
+
+.btn.ghost:hover {
+	background: #fff;
+	border-color: #cfd8e8;
+}
+/* #endif */
 
 @media (max-width: 768px) {
 	.overlay {
@@ -413,7 +455,7 @@ export default {
 	.panel {
 		width: 100%;
 		max-height: 92vh;
-		border-radius: 12px 12px 0 0;
+		border-radius: 28px 28px 0 0;
 	}
 
 	.form {

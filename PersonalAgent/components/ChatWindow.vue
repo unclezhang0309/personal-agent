@@ -7,7 +7,14 @@
 			</view>
 			<view class="right">
 				<button v-if="showClearInHeader" size="mini" class="header-secondary-btn" @click="$emit('clear-session')">清空对话</button>
-				<button v-if="showKbButton" size="mini" class="header-primary-btn" @click="$emit('open-kb')">知识库</button>
+				<button
+					v-if="showKbButton"
+					size="mini"
+					:class="isMobile ? 'header-secondary-btn' : 'header-primary-btn'"
+					@click="$emit('open-kb')"
+				>
+					知识库
+				</button>
 			</view>
 		</view>
 
@@ -28,7 +35,6 @@
 				<view v-if="!selectedRole" class="empty">请先在左侧创建或选择角色</view>
 				<view v-else-if="messages.length === 0" class="empty">开始和 {{ selectedRole.name }} 对话吧</view>
 				<view v-for="msg in messages" :key="msg.id" :id="'msg-' + msg.id" class="msg" :class="msg.role">
-					<!-- <text class="role">{{ msg.role === 'user' ? '你' : selectedRole.name }}</text> -->
 					<text class="content">{{ msg.content }}</text>
 				</view>
 				<view id="chat-anchor-bottom" class="chat-anchor-bottom"></view>
@@ -236,6 +242,7 @@ export default {
 	display: flex;
 	flex-direction: column;
 	position: relative;
+	background: linear-gradient(180deg, #f7f9ff 0%, #f4f7fb 40%, #f8fafc 100%);
 }
 
 .chat-header {
@@ -243,11 +250,13 @@ export default {
 	height: 56px;
 	min-height: 56px;
 	padding: 0 12px;
-	border-bottom: 1px solid #ececec;
+	border-bottom: 1px solid #e6ebf5;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(8px);
 }
 
 .left,
@@ -284,19 +293,26 @@ export default {
 	padding: 0 12px;
 	font-size: 13px;
 	font-weight: 500;
-	border-radius: 6px;
+	border-radius: 999px;
+	transition: all 0.2s ease;
 }
 
 .header-primary-btn {
-	background: #2f6dff;
+	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
 	color: #fff;
 	border: 1px solid #2f6dff;
+	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.22);
 }
 
 .header-secondary-btn {
-	background: #f1f4fa;
+	background: #f6f8fd;
 	color: #374151;
-	border: 1px solid #e8eaed;
+	border: 1px solid #e3e8f3;
+}
+
+.header-primary-btn::after,
+.header-secondary-btn::after {
+	border: none;
 }
 
 .message-scroll {
@@ -305,6 +321,7 @@ export default {
 	width: 100%;
 	box-sizing: border-box;
 	z-index: 1;
+	padding-top: 4px;
 }
 
 .message-inner {
@@ -314,6 +331,7 @@ export default {
 	align-items: flex-start;
 	box-sizing: border-box;
 	min-height: 100%;
+	gap: 2px;
 }
 
 /* 桌面 Web：消息列与输入区同宽，背景仍为整窗；略宽于原 560px 输入框 */
@@ -400,8 +418,8 @@ export default {
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
-	border-bottom: 1px solid #ececec;
-	background: #fff;
+	border-bottom: 1px solid #e6ebf5;
+	background: rgba(255, 255, 255, 0.86);
 	box-sizing: border-box;
 }
 
@@ -418,44 +436,55 @@ export default {
 }
 
 .empty {
-	margin-top: 48px;
+	margin-top: 40px;
+	padding: 12px 16px;
+	background: rgba(255, 255, 255, 0.7);
+	border: 1px solid #e7edf7;
+	border-radius: 999px;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 	text-align: center;
-	color: #888;
+	color: #74809a;
 	font-size: 14px;
-	width: 100%;
+	width: fit-content;
+	align-self: center;
 }
 
 .msg {
 	max-width: 86%;
 	width: fit-content;
-	padding: 10px 12px;
-	border-radius: 8px;
-	margin-bottom: 8px;
+	padding: 11px 14px;
+	border-radius: 22px;
+	margin-bottom: 10px;
 	display: inline-flex;
 	flex-direction: column;
 	gap: 4px;
 	box-sizing: border-box;
+	box-shadow: none;
+	border: 1px solid transparent;
+	transition: border-color 0.2s ease;
 }
 
 .msg.user {
 	align-self: flex-end;
-	background: #2f6dff;
+	background: linear-gradient(135deg, #2f6dff 0%, #5b93ff 100%);
 	color: #fff;
+	border-color: rgba(255, 255, 255, 0.22);
+	border-bottom-right-radius: 6px;
+	position: relative;
+	z-index: 2;
 }
 
 .msg.assistant {
-	background: #f5f7fb;
-	color: #333;
-}
-
-.role {
-	font-size: 12px;
-	opacity: 0.8;
+	background: rgba(255, 255, 255, 0.96);
+	color: #1f2937;
+	border-color: #e9eef8;
+	border-bottom-left-radius: 6px;
+	z-index: 1;
 }
 
 .content {
 	font-size: 15px;
-	line-height: 1.5;
+	line-height: 1.58;
 	white-space: pre-wrap;
 	word-break: break-word;
 	overflow-wrap: anywhere;
@@ -469,6 +498,7 @@ export default {
 	align-items: center;
 	box-sizing: border-box;
 	z-index: 10;
+	padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
 .new-msg-tip {
@@ -478,9 +508,10 @@ export default {
 	margin-bottom: 6px;
 	z-index: 5;
 	padding: 8px 14px;
-	background: rgba(47, 109, 255, 0.95);
-	border-radius: 20px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+	background: linear-gradient(135deg, rgba(47, 109, 255, 0.96), rgba(91, 147, 255, 0.96));
+	border-radius: 999px;
+	box-shadow: 0 8px 20px rgba(47, 109, 255, 0.28);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .new-msg-text {
@@ -509,27 +540,35 @@ export default {
 .composer-frame {
 	width: min(560px, 72vw);
 	max-width: 100%;
-	background: #f7f8fb;
-	border-radius: 8px;
-	padding: 8px 10px 10px;
+	background: rgba(255, 255, 255, 0.94);
+	border-radius: 28px;
+	padding: 8px 12px 10px;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 6px;
+	border: 1px solid #dfe7f5;
+	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .input {
 	width: 100%;
-	min-height: 56px;
+	min-height: 44px;
 	max-height: 140px;
 	display: block;
 	background: transparent;
-	padding: 0;
+	padding: 4px 8px;
 	box-sizing: border-box;
-	line-height: 1.4;
+	line-height: 1.5;
 	font-size: 14px;
 	overflow-y: auto;
 	border: none;
+	color: #111827;
+}
+
+.input::placeholder {
+	color: #96a1b5;
 }
 
 .composer-actions {
@@ -563,7 +602,8 @@ export default {
 	color: #2f6dff;
 	background: #fff;
 	border: 1px solid #2f6dff;
-	border-radius: 6px;
+	border-radius: 999px;
+	transition: all 0.2s ease;
 }
 
 .composer-settings-btn::after {
@@ -580,9 +620,11 @@ export default {
 	font-size: 14px;
 	font-weight: 500;
 	color: #fff;
-	background: #2f6dff;
-	border-radius: 6px;
+	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
+	border-radius: 999px;
 	border: 1px solid #2f6dff;
+	box-shadow: 0 6px 16px rgba(47, 109, 255, 0.24);
+	transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .send-btn::after {
@@ -598,14 +640,52 @@ export default {
 	font-size: 14px;
 	font-weight: 500;
 	box-sizing: border-box;
-	background: #f3f4f6;
+	background: #f7f9fc;
 	color: #4b5563;
-	border-radius: 6px;
-	border: 1px solid #e5e7eb;
+	border-radius: 999px;
+	border: 1px solid #e3e9f4;
+	transition: all 0.2s ease;
 }
 
 .clear-btn::after {
 	border: none;
 }
+
+/* #ifdef H5 */
+.header-primary-btn:hover,
+.send-btn:hover {
+	filter: brightness(1.03);
+}
+
+.header-secondary-btn:hover,
+.composer-settings-btn:hover,
+.clear-btn:hover {
+	border-color: #cfd8e8;
+	background: #ffffff;
+}
+
+.msg:hover {
+	box-shadow: none;
+}
+
+.msg.user:hover {
+	box-shadow: none;
+}
+
+.composer-frame:focus-within {
+	border-color: #bfd4ff;
+	box-shadow: 0 14px 32px rgba(47, 109, 255, 0.16);
+}
+
+.new-msg-tip:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 12px 24px rgba(47, 109, 255, 0.34);
+}
+
+.send-btn:active,
+.header-primary-btn:active {
+	transform: translateY(1px);
+}
+/* #endif */
 
 </style>
