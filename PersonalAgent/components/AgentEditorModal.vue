@@ -8,7 +8,8 @@
 
 			<view class="form">
 				<text class="label">角色名称</text>
-				<input class="input" :value="formData.name" placeholder="例如：学习助手" @input="onNameInput" />
+				<input class="input" :class="{ 'input--error': nameError }" :value="formData.name" placeholder="例如：学习助手" @input="onNameInput" />
+				<text v-if="nameError" class="field-error">{{ nameError }}</text>
 
 				<text class="label">身份描述</text>
 				<textarea
@@ -91,7 +92,7 @@
 						<checkbox :checked="(formData.boundKbIds || []).includes(kb.id)" @click="toggleKb(kb.id)" />
 						<text>{{ kb.name }}</text>
 					</label>
-					<text v-if="kbs.length === 0" class="hint">暂无知识库，请先在知识库面板创建</text>
+					<text v-if="kbs.length === 0" class="hint">知识库，请先在知识库面板创建</text>
 				</view>
 			</view>
 
@@ -164,6 +165,7 @@ export default {
 	data() {
 		return {
 			formData: createDefaultForm(),
+			nameError: '',
 			headOptions,
 			bodyOptions,
 			legOptions,
@@ -178,6 +180,7 @@ export default {
 	},
 	methods: {
 		initForm() {
+			this.nameError = '';
 			const base = createDefaultForm();
 			this.formData = {
 				...base,
@@ -190,7 +193,9 @@ export default {
 			};
 		},
 		onNameInput(e) {
-			this.formData.name = e.detail.value;
+			const d = e && e.detail;
+			this.formData.name = d && d.value != null ? d.value : '';
+			this.nameError = '';
 		},
 		onDescriptionInput(e) {
 			this.formData.description = e.detail.value;
@@ -226,13 +231,15 @@ export default {
 			this.formData.boundKbIds = Array.from(list);
 		},
 		onSubmit() {
-			if (!this.formData.name.trim()) {
-				uni.showToast({ title: '请填写角色名称', icon: 'none' });
+			const name = String(this.formData.name == null ? '' : this.formData.name).trim();
+			if (!name) {
+				this.nameError = '请填写角色名称';
 				return;
 			}
+			this.nameError = '';
 			this.$emit('save', {
 				...this.formData,
-				name: this.formData.name.trim()
+				name
 			});
 		}
 	}
@@ -297,6 +304,21 @@ export default {
 	background: #f8f9fb;
 	border-radius: 12rpx;
 	padding: 0 20rpx;
+	border: 1px solid transparent;
+	box-sizing: border-box;
+}
+
+.input--error {
+	border-color: #ef4444;
+	background: #fff5f5;
+}
+
+.field-error {
+	display: block;
+	font-size: 24rpx;
+	color: #dc2626;
+	margin: 8rpx 0 0 4rpx;
+	line-height: 1.4;
 }
 
 .textarea {

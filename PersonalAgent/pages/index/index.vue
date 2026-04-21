@@ -26,6 +26,7 @@
 						:input-text="inputText"
 						@toggle-sidebar="openMobileSidebar"
 						@open-kb="openKbPanel"
+						@open-settings="openChatSettings"
 						@clear-session="clearCurrentSession"
 						@update:inputText="inputText = $event"
 						@send="sendMessage"
@@ -230,11 +231,21 @@ export default {
 			this.roleEditorVisible = true;
 		},
 		saveRole(payload) {
-			if (this.roleEditorMode === 'edit' && payload.id) {
-				this.roles = this.roles.map((item) => (item.id === payload.id ? { ...item, ...payload } : item));
+			if (!payload || typeof payload !== 'object') {
+				uni.showModal({ title: '提示', content: '请填写角色名称', showCancel: false });
+				return;
+			}
+			const name = String(payload.name != null ? payload.name : '').trim();
+			if (!name) {
+				uni.showModal({ title: '提示', content: '请填写角色名称', showCancel: false });
+				return;
+			}
+			const data = { ...payload, name };
+			if (this.roleEditorMode === 'edit' && data.id) {
+				this.roles = this.roles.map((item) => (item.id === data.id ? { ...item, ...data } : item));
 			} else {
 				const newRole = {
-					...payload,
+					...data,
 					id: createId('role'),
 					createdAt: Date.now()
 				};
@@ -279,6 +290,9 @@ export default {
 		openKbPanel() {
 			this.kbPanelCollapsed = false;
 			this.kbPanelVisible = true;
+		},
+		openChatSettings() {
+			uni.showToast({ title: '设置功能开发中', icon: 'none' });
 		},
 		closeKbPanel() {
 			this.kbPanelVisible = false;
@@ -405,6 +419,8 @@ export default {
 	width: 100vw;
 	background: #fff;
 	overflow: hidden;
+	--agent-panel-width: min(240px, calc(86vw * 2 / 3));
+	--side-panel-collapsed: 96rpx;
 }
 
 .layout {
@@ -415,13 +431,15 @@ export default {
 }
 
 .sidebar-wrap {
-	width: 320rpx;
+	width: var(--agent-panel-width);
 	height: 100%;
 	transition: width 0.2s ease;
+	box-sizing: border-box;
+	flex-shrink: 0;
 }
 
 .sidebar-wrap.collapsed {
-	width: 96rpx;
+	width: var(--side-panel-collapsed);
 }
 
 .chat-wrap {
@@ -430,7 +448,7 @@ export default {
 	min-height: 0;
 	min-width: 0;
 	overflow: hidden;
-	padding: 8px;
+	padding: 0;
 	box-sizing: border-box;
 	background: #fff;
 }
@@ -443,25 +461,26 @@ export default {
 }
 
 .kb-wrap {
-	width: 96rpx;
+	width: var(--side-panel-collapsed);
 	height: 100%;
 	transition: width 0.2s ease;
 	border-left: 1px solid #eceff4;
 	background: #f8f9fb;
 	box-sizing: border-box;
 	overflow: hidden;
+	flex-shrink: 0;
 }
 
 .kb-wrap.open {
-	width: min(360px, 86vw);
+	width: var(--agent-panel-width);
 }
 
 .kb-wrap.open.collapsed {
-	width: 96rpx;
+	width: var(--side-panel-collapsed);
 }
 
 .kb-dock {
-	width: 96rpx;
+	width: var(--side-panel-collapsed);
 	height: 100%;
 	display: flex;
 	justify-content: center;
@@ -496,10 +515,10 @@ export default {
 }
 
 .mobile-sidebar {
-	width: min(360px, 86vw);
+	width: var(--agent-panel-width);
 	max-width: 86vw;
 	height: 100%;
-	background: #fff;
+	background: #f8f9fb;
 	overflow: hidden;
 	transition: width 0.2s ease;
 	transform: translateX(-100%);
@@ -511,7 +530,7 @@ export default {
 }
 
 .mobile-sidebar.collapsed {
-	width: 96rpx;
+	width: var(--side-panel-collapsed);
 }
 
 @media (max-width: 1024px) {
@@ -527,9 +546,6 @@ export default {
 		display: none;
 	}
 
-	.chat-wrap {
-		padding: 6px;
-	}
 }
 
 .delete-role-overlay {

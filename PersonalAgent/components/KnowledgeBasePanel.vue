@@ -2,16 +2,13 @@
 	<view v-if="rendered" class="overlay" :class="{ mobile: isMobile, inline, active: panelActive }" @click="onOverlayClick">
 		<view class="panel" :class="{ mobile: isMobile, collapsed }" @click.stop>
 			<view class="header">
-				<view class="header-actions">
-					<button class="toggle-btn" size="mini" @click="$emit('toggle-collapse')">
-						<uni-icons :type="collapsed ? 'left' : 'right'" size="14" color="#2f6dff"></uni-icons>
-					</button>
-				</view>
+				<button class="header-icon-btn" size="mini" @click="$emit('toggle-collapse')">
+					<uni-icons :type="collapsed ? 'left' : 'right'" size="14" color="#2f6dff"></uni-icons>
+				</button>
 				<text v-if="!collapsed" class="title">知识库管理</text>
-			</view>
-
-			<view v-if="!collapsed" class="toolbar">
-				<button size="mini" class="action-btn" @click="openCreateKb">+新建知识库</button>
+				<view v-if="!collapsed" class="header-actions">
+					<button size="mini" class="header-primary-btn" @click="openCreateKb">+新建知识库</button>
+				</view>
 			</view>
 
 			<scroll-view v-if="!collapsed" class="kb-scroll" scroll-y>
@@ -51,7 +48,7 @@
 							</view>
 						</view>
 
-						<text v-if="getKbItems(kb.id).length === 0" class="item-empty">暂无知识条目</text>
+						<!-- <text v-if="getKbItems(kb.id).length === 0" class="item-empty">暂无知识条目</text> -->
 
 						<view v-if="getTotalPages(kb.id) > 1" class="pagination">
 							<button
@@ -369,15 +366,16 @@ export default {
 .panel {
 	width: min(760rpx, 92vw);
 	height: 100%;
-	background: #fff;
+	background: #f8f9fb;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 	pointer-events: auto;
+	box-sizing: border-box;
 }
 
 .panel.mobile {
-	width: min(360px, 86vw);
+	width: var(--agent-panel-width, min(240px, calc(86vw * 2 / 3)));
 	max-width: 86vw;
 	transform: translateX(100%);
 	transition: transform 0.22s ease, width 0.2s ease;
@@ -393,42 +391,83 @@ export default {
 
 .overlay.inline .panel {
 	width: 100%;
+	max-width: 100%;
+	min-width: 0;
 	height: 100%;
 	border-radius: 0;
 }
 
 .header {
-	padding: 12px 14px;
+	flex: 0 0 56px;
+	height: 56px;
+	min-height: 56px;
+	box-sizing: border-box;
+	padding: 0 12px;
 	border-bottom: 1px solid #ececec;
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
 	gap: 8px;
+	min-width: 0;
+}
+
+.panel.collapsed .header {
+	justify-content: center;
+	padding: 0 4px;
 }
 
 .header-actions {
-	margin-left: 0;
+	margin-left: auto;
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	flex-shrink: 0;
 }
 
-.toggle-btn {
+.header-primary-btn,
+.header-icon-btn {
 	margin: 0;
-	width: 34px;
-	min-width: 34px;
+	box-sizing: border-box;
+	flex-shrink: 0;
+}
+
+.header-primary-btn {
+	height: 28px;
+	min-height: 28px;
+	line-height: 26px;
+	padding: 0 12px;
+	font-size: 13px;
+	font-weight: 500;
+	border-radius: 6px;
+	background: #2f6dff;
+	color: #fff;
+	border: 1px solid #2f6dff;
+	white-space: nowrap;
+}
+
+.header-icon-btn {
+	width: 28px;
+	height: 28px;
+	min-width: 28px;
 	padding: 0;
-	line-height: 1.8;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
 }
 
 .title {
-	font-size: 18px;
+	flex: 1;
+	min-width: 0;
+	font-size: 15px;
 	font-weight: 600;
-	margin-left: auto;
-	text-align: right;
+	color: #111827;
+	line-height: 1.25;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .close {
@@ -436,20 +475,15 @@ export default {
 	color: #666;
 }
 
-.toolbar {
-	padding: 10px 14px;
-	display: flex;
-	justify-content: flex-end;
-}
-
 .kb-scroll {
 	flex: 1;
-	padding: 0 14px 14px;
+	padding: 0 12px 14px;
 	box-sizing: border-box;
 }
 
 .kb-card {
-	background: #f8f9fb;
+	background: #fff;
+	border: 1px solid #eceff4;
 	border-radius: 10px;
 	padding: 10px 12px 10px 10px;
 	margin-bottom: 10px;
@@ -470,7 +504,7 @@ export default {
 }
 
 .kb-icon {
-	font-size: 20px;
+	font-size: 28rpx;
 	line-height: 1.2;
 }
 
@@ -483,7 +517,7 @@ export default {
 }
 
 .kb-name {
-	font-size: 16px;
+	font-size: 28rpx;
 	font-weight: 600;
 	white-space: nowrap;
 	overflow: hidden;
@@ -500,7 +534,7 @@ export default {
 }
 
 .action {
-	font-size: 13px;
+	font-size: 22rpx;
 	color: #2f6dff;
 }
 
@@ -509,8 +543,8 @@ export default {
 }
 
 .kb-desc {
-	font-size: 13px;
-	color: #888;
+	font-size: 22rpx;
+	color: #777;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -543,8 +577,8 @@ export default {
 }
 
 .count {
-	font-size: 12px;
-	color: #666;
+	font-size: 22rpx;
+	color: #777;
 }
 
 .item-row {
@@ -568,7 +602,7 @@ export default {
 }
 
 .item-title {
-	font-size: 13px;
+	font-size: 28rpx;
 	font-weight: 600;
 	color: #222;
 	white-space: nowrap;
@@ -577,7 +611,7 @@ export default {
 }
 
 .item-content {
-	font-size: 12px;
+	font-size: 22rpx;
 	color: #777;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
@@ -588,7 +622,7 @@ export default {
 
 .item-empty {
 	display: block;
-	font-size: 12px;
+	font-size: 22rpx;
 	color: #999;
 	padding: 4px 0 2px;
 }
@@ -621,6 +655,7 @@ export default {
 
 .add-item-btn {
 	margin: 0;
+	font-size: 22rpx;
 	line-height: 1.8;
 	background: #eef3ff;
 	color: #2f6dff;
@@ -629,13 +664,13 @@ export default {
 .empty {
 	padding: 20px 10px;
 	color: #888;
-	font-size: 14px;
+	font-size: 24rpx;
 	text-align: center;
 }
 
 .item-collapsed-tip {
 	display: block;
-	font-size: 12px;
+	font-size: 22rpx;
 	color: #999;
 	padding: 2px 0 4px;
 }
@@ -650,14 +685,15 @@ export default {
 
 .page-btn {
 	margin: 0;
+	font-size: 22rpx;
 	line-height: 1.7;
 	background: #f3f4f6;
 	color: #374151;
 }
 
 .page-text {
-	font-size: 12px;
-	color: #666;
+	font-size: 22rpx;
+	color: #777;
 }
 
 .sub-overlay {

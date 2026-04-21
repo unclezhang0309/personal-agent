@@ -2,18 +2,18 @@
 	<view class="chat-window" :class="{ 'chat-window--web': !isMobile, 'chat-window--mobile': isMobile }">
 		<view class="chat-header">
 			<view class="left">
-				<button v-if="isMobile" size="mini" class="menu-btn" @click="$emit('toggle-sidebar')">角色</button>
+				<button v-if="isMobile" size="mini" class="header-secondary-btn" @click="$emit('toggle-sidebar')">角色</button>
 				<text v-if="!isMobile" class="title">{{ selectedRole ? selectedRole.name : '未选择角色' }}</text>
 			</view>
 			<view class="right">
-				<button v-if="showClearInHeader" size="mini" class="kb-btn ghost" @click="$emit('clear-session')">清空对话</button>
-				<button v-if="showKbButton" size="mini" class="kb-btn" @click="$emit('open-kb')">知识库</button>
+				<button v-if="showClearInHeader" size="mini" class="header-secondary-btn" @click="$emit('clear-session')">清空对话</button>
+				<button v-if="showKbButton" size="mini" class="header-primary-btn" @click="$emit('open-kb')">知识库</button>
 			</view>
 		</view>
 
 		<view v-if="isMobile" class="conversation-bar">
 			<text class="conversation-title">{{ selectedRole ? selectedRole.name : '未选择角色' }}</text>
-			<button v-if="canShowClearOnMobileBar" size="mini" class="conversation-clear" @click="$emit('clear-session')">清空对话</button>
+			<button v-if="canShowClearOnMobileBar" size="mini" class="header-secondary-btn" @click="$emit('clear-session')">清空对话</button>
 		</view>
 
 		<scroll-view
@@ -40,18 +40,23 @@
 				<view v-if="showNewMsgTip" class="new-msg-tip" @click="scrollToBottomForce">
 					<text class="new-msg-text">新消息</text>
 				</view>
-				<textarea
-					class="input"
-					:value="inputText"
-					placeholder="输入消息..."
-					maxlength="2000"
-					:auto-height="true"
-					@input="$emit('update:inputText', $event.detail.value)"
-					@keydown="onInputKeydown"
-				/>
-				<view class="composer-actions">
-					<button v-if="showClearInComposer" size="mini" class="clear-btn" @click="$emit('clear-session')">清空对话</button>
-					<button class="send-btn" type="primary" @click="$emit('send')">发送</button>
+				<view class="composer-frame">
+					<textarea
+						class="input"
+						:value="inputText"
+						placeholder="输入消息..."
+						maxlength="2000"
+						:auto-height="true"
+						@input="$emit('update:inputText', $event.detail.value)"
+						@keydown="onInputKeydown"
+					/>
+					<view class="composer-actions">
+						<button type="default" class="composer-settings-btn" @click="$emit('open-settings')">设置</button>
+						<view class="composer-actions-end">
+							<button v-if="showClearInComposer" size="mini" class="clear-btn" @click="$emit('clear-session')">清空对话</button>
+							<button class="send-btn" type="primary" @click="$emit('send')">发送</button>
+						</view>
+					</view>
 				</view>
 			</view>
 		</view>
@@ -236,6 +241,7 @@ export default {
 .chat-header {
 	flex: 0 0 56px;
 	height: 56px;
+	min-height: 56px;
 	padding: 0 12px;
 	border-bottom: 1px solid #ececec;
 	display: flex;
@@ -249,22 +255,48 @@ export default {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	min-width: 0;
+}
+
+.left {
+	flex: 1;
 }
 
 .title {
-	font-size: 18px;
+	flex: 1;
+	min-width: 0;
+	font-size: 15px;
 	font-weight: 600;
+	color: #111827;
+	line-height: 1.25;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.menu-btn,
-.kb-btn {
+.header-primary-btn,
+.header-secondary-btn {
 	margin: 0;
-	line-height: 1.8;
+	box-sizing: border-box;
+	height: 28px;
+	min-height: 28px;
+	line-height: 26px;
+	padding: 0 12px;
+	font-size: 13px;
+	font-weight: 500;
+	border-radius: 6px;
 }
 
-.kb-btn.ghost {
+.header-primary-btn {
+	background: #2f6dff;
+	color: #fff;
+	border: 1px solid #2f6dff;
+}
+
+.header-secondary-btn {
 	background: #f1f4fa;
-	color: #333;
+	color: #374151;
+	border: 1px solid #e8eaed;
 }
 
 .message-scroll {
@@ -308,6 +340,11 @@ export default {
 	max-width: 100%;
 }
 
+.chat-window--web .composer-frame {
+	width: 100%;
+	max-width: 100%;
+}
+
 .chat-window--web .input {
 	width: 100%;
 	max-width: 100%;
@@ -338,6 +375,11 @@ export default {
 	margin: 0 0 8px;
 }
 
+.chat-window--mobile .composer-frame {
+	width: 100%;
+	max-width: 100%;
+}
+
 .chat-window--mobile .input {
 	width: 100%;
 	max-width: 100%;
@@ -350,31 +392,29 @@ export default {
 }
 
 .conversation-bar {
-	flex: 0 0 44px;
-	height: 44px;
+	flex: 0 0 56px;
+	height: 56px;
+	min-height: 56px;
 	padding: 0 12px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	gap: 8px;
 	border-bottom: 1px solid #ececec;
 	background: #fff;
 	box-sizing: border-box;
 }
 
 .conversation-title {
-	font-size: 14px;
+	flex: 1;
+	min-width: 0;
+	font-size: 15px;
 	font-weight: 600;
-	color: #333;
+	color: #111827;
+	line-height: 1.25;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.conversation-clear {
-	margin: 0;
-	line-height: 1.8;
-	background: #f1f4fa;
-	color: #333;
 }
 
 .empty {
@@ -466,36 +506,106 @@ export default {
 	box-sizing: border-box;
 }
 
-.input {
+.composer-frame {
 	width: min(560px, 72vw);
+	max-width: 100%;
+	background: #f7f8fb;
+	border-radius: 8px;
+	padding: 8px 10px 10px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.input {
+	width: 100%;
 	min-height: 56px;
 	max-height: 140px;
-	max-width: 100%;
 	display: block;
-	background: #f7f8fb;
-	padding: 8px 10px;
-	border-radius: 6px;
+	background: transparent;
+	padding: 0;
 	box-sizing: border-box;
 	line-height: 1.4;
 	font-size: 14px;
 	overflow-y: auto;
-}
-
-.send-btn {
-	margin: 0;
-	line-height: 1.9;
-}
-
-.clear-btn {
-	margin: 0;
-	line-height: 1.9;
-	background: #f3f4f6;
-	color: #4b5563;
+	border: none;
 }
 
 .composer-actions {
 	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+	flex-shrink: 0;
+	width: 100%;
+}
+
+.composer-actions-end {
+	display: flex;
+	align-items: center;
 	justify-content: flex-end;
 	gap: 8px;
+	flex: 1;
+	min-width: 0;
 }
+
+.composer-settings-btn {
+	flex-shrink: 0;
+	margin: 0;
+	box-sizing: border-box;
+	min-height: 32px;
+	height: 32px;
+	line-height: 30px;
+	padding: 0 14px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #2f6dff;
+	background: #fff;
+	border: 1px solid #2f6dff;
+	border-radius: 6px;
+}
+
+.composer-settings-btn::after {
+	border: none;
+}
+
+.send-btn {
+	margin: 0;
+	box-sizing: border-box;
+	min-height: 32px;
+	height: 32px;
+	line-height: 30px;
+	padding: 0 16px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #fff;
+	background: #2f6dff;
+	border-radius: 6px;
+	border: 1px solid #2f6dff;
+}
+
+.send-btn::after {
+	border: none;
+}
+
+.clear-btn {
+	margin: 0;
+	min-height: 32px;
+	height: 32px;
+	line-height: 30px;
+	padding: 0 14px;
+	font-size: 14px;
+	font-weight: 500;
+	box-sizing: border-box;
+	background: #f3f4f6;
+	color: #4b5563;
+	border-radius: 6px;
+	border: 1px solid #e5e7eb;
+}
+
+.clear-btn::after {
+	border: none;
+}
+
 </style>

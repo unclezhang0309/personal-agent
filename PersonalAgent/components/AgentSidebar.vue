@@ -3,8 +3,8 @@
 		<view class="sidebar-header">
 			<text v-if="!collapsed" class="title">我的智能体</text>
 			<view class="header-actions">
-				<button v-if="!collapsed" class="add-btn" size="mini" @click="$emit('create')">+新建</button>
-				<button class="toggle-btn icon-only" size="mini" @click="$emit('toggle-collapse')">
+				<button v-if="!collapsed" class="header-primary-btn" size="mini" @click="$emit('create')">+新建</button>
+				<button class="header-icon-btn" size="mini" @click="$emit('toggle-collapse')">
 					<uni-icons :type="collapsed ? 'right' : 'left'" size="14" color="#2f6dff"></uni-icons>
 				</button>
 			</view>
@@ -57,64 +57,79 @@ export default {
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background: #f7f8fa;
-	border-right: 1px solid #e9eaee;
+	background: #f8f9fb;
+	border-right: 1px solid #eceff4;
 	min-width: 0;
 	box-sizing: border-box;
 	overflow: hidden;
 }
 
 .sidebar-header {
+	flex: 0 0 56px;
+	height: 56px;
+	min-height: 56px;
+	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
-	padding: 16rpx 20rpx;
-	gap: 8rpx;
+	padding: 0 12px;
+	gap: 8px;
 	flex-wrap: nowrap;
+	border-bottom: 1px solid #ececec;
 }
 
 .header-actions {
 	margin-left: auto;
 	display: flex;
 	align-items: center;
-	gap: 8rpx;
+	gap: 8px;
+	flex-shrink: 0;
 }
 
 .title {
-	font-size: 28rpx;
-	font-weight: 600;
-	white-space: nowrap;
 	flex: 1;
+	min-width: 0;
+	font-size: 15px;
+	font-weight: 600;
+	color: #111827;
+	line-height: 1.25;
+	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	line-height: 1.2;
 }
 
-.add-btn {
+.header-primary-btn,
+.header-icon-btn {
 	margin: 0;
-	line-height: 1.8;
-	white-space: nowrap;
+	box-sizing: border-box;
 	flex-shrink: 0;
-	min-width: 84rpx;
-	padding: 0 16rpx;
 }
 
-.toggle-btn {
-	margin: 0;
-	line-height: 1.8;
+.header-primary-btn {
+	height: 28px;
+	min-height: 28px;
+	line-height: 26px;
+	padding: 0 12px;
+	font-size: 13px;
+	font-weight: 500;
+	border-radius: 6px;
+	background: #2f6dff;
+	color: #fff;
+	border: 1px solid #2f6dff;
 	white-space: nowrap;
-	flex-shrink: 0;
-	min-width: 84rpx;
-	padding: 0 16rpx;
 }
 
-.toggle-btn.icon-only {
-	min-width: 56rpx;
-	width: 56rpx;
+.header-icon-btn {
+	width: 28px;
+	height: 28px;
+	min-width: 28px;
 	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
 }
 
 .role-list {
@@ -188,7 +203,7 @@ export default {
 }
 
 .sidebar.collapsed .sidebar-header {
-	padding: 16rpx 8rpx;
+	padding: 0 8px;
 	justify-content: flex-end;
 }
 
@@ -223,10 +238,9 @@ export default {
 	font-size: 20rpx;
 }
 
-.sidebar.collapsed .toggle-btn {
-	min-width: 56rpx;
-	width: 56rpx;
-	padding: 0;
+.sidebar.collapsed .header-icon-btn {
+	width: 28px;
+	min-width: 28px;
 }
 
 .sidebar.collapsed .header-actions {
