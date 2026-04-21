@@ -7,7 +7,7 @@
 	}],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "个人数据AI助手",
+		"navigationBarTitleText": "Personal Agent",
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8",
 		"app-plus": {
