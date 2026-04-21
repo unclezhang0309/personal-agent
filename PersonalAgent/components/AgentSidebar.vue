@@ -13,7 +13,12 @@
 				</button>
 			</view>
 		</view>
-		<scroll-view class="role-list" scroll-y :show-scrollbar="false" @scroll="onRoleScroll">
+		<scroll-view
+			class="role-list"
+			scroll-y
+			:show-scrollbar="false"
+			@scroll="onRoleScroll"
+		>
 			<view class="role-spacer" :style="{ height: `${roleTopSpacer}px` }"></view>
 			<view
 				v-for="entry in visibleRoleEntries"

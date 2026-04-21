@@ -523,8 +523,8 @@ export default {
 }
 
 .mobile-sidebar {
-	width: var(--agent-panel-width);
-	max-width: 86vw;
+	width: 100vw;
+	max-width: 100vw;
 	height: 100%;
 	background: linear-gradient(180deg, #f7f9ff 0%, #f3f6fb 100%);
 	overflow: hidden;

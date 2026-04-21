@@ -126,6 +126,95 @@
 						maxlength="200"
 						@input="kbForm.description = $event.detail.value"
 					/>
+					<view class="web-card">
+						<view class="web-row">
+							<text class="web-label">自动更新知识库</text>
+							<switch :checked="!!kbForm.webSync.enabled" color="#2f6dff" @change="onKbWebEnabledChange" />
+						</view>
+						<view v-if="kbForm.webSync.enabled" class="web-body">
+							<view class="web-mode-row">
+								<button class="web-mode-btn" :class="{ active: kbForm.webSync.mode === 'auto' }" @click="setKbWebMode('auto')">
+									自动抓取
+								</button>
+								<button
+									class="web-mode-btn"
+									:class="{ active: kbForm.webSync.mode === 'restricted' }"
+									@click="setKbWebMode('restricted')"
+								>
+									限定来源
+								</button>
+							</view>
+							<view class="web-time-row">
+								<text class="web-sub-label">抓取时间范围</text>
+								<view class="web-time-options">
+									<button
+										class="web-time-btn"
+										:class="{ active: kbForm.webSync.timeRange === 'all' }"
+										@click="setKbWebTimeRange('all')"
+									>
+										不限
+									</button>
+									<button
+										class="web-time-btn"
+										:class="{ active: kbForm.webSync.timeRange === '7d' }"
+										@click="setKbWebTimeRange('7d')"
+									>
+										近7天
+									</button>
+									<button
+										class="web-time-btn"
+										:class="{ active: kbForm.webSync.timeRange === '30d' }"
+										@click="setKbWebTimeRange('30d')"
+									>
+										近30天
+									</button>
+									<button
+										class="web-time-btn"
+										:class="{ active: kbForm.webSync.timeRange === '90d' }"
+										@click="setKbWebTimeRange('90d')"
+									>
+										近90天
+									</button>
+								</view>
+							</view>
+							<view v-if="kbForm.webSync.mode === 'auto'">
+								<view class="web-input-row">
+									<input
+										class="modal-input"
+										:value="kbWebTopicInput"
+										placeholder="添加领域关键词，例如：AI新闻"
+										@input="onKbWebTopicInput"
+										@confirm="addKbWebTopic"
+									/>
+									<button class="web-add-btn" @click="addKbWebTopic">添加</button>
+								</view>
+								<view v-if="kbForm.webSync.topics.length" class="selected-web-tags">
+									<view v-for="topic in kbForm.webSync.topics" :key="`web-topic-${topic}`" class="web-tag">
+										<text class="web-tag-text">{{ topic }}</text>
+										<text class="web-tag-remove" @click="removeKbWebTopic(topic)">×</text>
+									</view>
+								</view>
+							</view>
+							<view v-else>
+								<view class="web-input-row">
+									<input
+										class="modal-input"
+										:value="kbWebDomainInput"
+										placeholder="添加网址，例如：docs.python.org"
+										@input="onKbWebDomainInput"
+										@confirm="addKbWebDomain"
+									/>
+									<button class="web-add-btn" @click="addKbWebDomain">添加</button>
+								</view>
+								<view v-if="kbForm.webSync.allowedDomains.length" class="selected-web-tags">
+									<view v-for="domain in kbForm.webSync.allowedDomains" :key="`web-domain-${domain}`" class="web-tag">
+										<text class="web-tag-text">{{ domain }}</text>
+										<text class="web-tag-remove" @click="removeKbWebDomain(domain)">×</text>
+									</view>
+								</view>
+							</view>
+						</view>
+					</view>
 					<text v-if="kbFormError" class="error-text">{{ kbFormError }}</text>
 					<view class="modal-actions">
 						<button size="mini" class="ghost-btn" @click="kbModalVisible = false">取消</button>
@@ -191,9 +280,18 @@ export default {
 				id: '',
 				name: '',
 				icon: '📘',
-				description: ''
+				description: '',
+				webSync: {
+					enabled: false,
+					mode: 'auto',
+					timeRange: '30d',
+					topics: [],
+					allowedDomains: []
+				}
 			},
 			kbFormError: '',
+			kbWebTopicInput: '',
+			kbWebDomainInput: '',
 			itemModalVisible: false,
 			itemModalMode: 'create',
 			itemForm: {
@@ -418,20 +516,76 @@ export default {
 			this.closeActionMenus();
 			this.kbModalMode = 'create';
 			this.kbFormError = '';
-			this.kbForm = { id: '', name: '', icon: '📘', description: '' };
+			this.kbWebTopicInput = '';
+			this.kbWebDomainInput = '';
+			this.kbForm = {
+				id: '',
+				name: '',
+				icon: '📘',
+				description: '',
+				webSync: { enabled: false, mode: 'auto', timeRange: '30d', topics: [], allowedDomains: [] }
+			};
 			this.kbModalVisible = true;
 		},
 		openEditKb(kb) {
 			this.closeActionMenus();
 			this.kbModalMode = 'edit';
 			this.kbFormError = '';
+			this.kbWebTopicInput = '';
+			this.kbWebDomainInput = '';
 			this.kbForm = {
 				id: kb.id,
 				name: kb.name || '',
 				icon: kb.icon || '📘',
-				description: kb.description || ''
+				description: kb.description || '',
+				webSync: {
+					enabled: !!(kb.webSync && kb.webSync.enabled),
+					mode: (kb.webSync && kb.webSync.mode) || 'auto',
+					timeRange: (kb.webSync && kb.webSync.timeRange) || '30d',
+					topics: [...(((kb.webSync || {}).topics) || [])],
+					allowedDomains: [...(((kb.webSync || {}).allowedDomains) || [])]
+				}
 			};
 			this.kbModalVisible = true;
+		},
+		onKbWebEnabledChange(e) {
+			this.kbForm.webSync.enabled = !!(e && e.detail && e.detail.value);
+		},
+		setKbWebMode(mode) {
+			this.kbForm.webSync.mode = mode;
+		},
+		setKbWebTimeRange(timeRange) {
+			this.kbForm.webSync.timeRange = timeRange;
+		},
+		onKbWebTopicInput(e) {
+			this.kbWebTopicInput = (e && e.detail && e.detail.value) || '';
+		},
+		addKbWebTopic() {
+			const v = String(this.kbWebTopicInput || '').trim();
+			if (!v) return;
+			const set = new Set(this.kbForm.webSync.topics || []);
+			set.add(v);
+			this.kbForm.webSync.topics = Array.from(set);
+			this.kbWebTopicInput = '';
+		},
+		removeKbWebTopic(topic) {
+			this.kbForm.webSync.topics = (this.kbForm.webSync.topics || []).filter((t) => t !== topic);
+		},
+		onKbWebDomainInput(e) {
+			this.kbWebDomainInput = (e && e.detail && e.detail.value) || '';
+		},
+		addKbWebDomain() {
+			const raw = String(this.kbWebDomainInput || '').trim();
+			if (!raw) return;
+			const normalized = raw.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+			if (!normalized) return;
+			const set = new Set(this.kbForm.webSync.allowedDomains || []);
+			set.add(normalized);
+			this.kbForm.webSync.allowedDomains = Array.from(set);
+			this.kbWebDomainInput = '';
+		},
+		removeKbWebDomain(domain) {
+			this.kbForm.webSync.allowedDomains = (this.kbForm.webSync.allowedDomains || []).filter((d) => d !== domain);
 		},
 		submitKb() {
 			const name = (this.kbForm.name || '').trim();
@@ -443,7 +597,14 @@ export default {
 				id: this.kbForm.id,
 				name,
 				icon: (this.kbForm.icon || '').trim() || '📘',
-				description: (this.kbForm.description || '').trim()
+				description: (this.kbForm.description || '').trim(),
+				webSync: {
+					enabled: !!(this.kbForm.webSync && this.kbForm.webSync.enabled),
+					mode: (this.kbForm.webSync && this.kbForm.webSync.mode) || 'auto',
+					timeRange: (this.kbForm.webSync && this.kbForm.webSync.timeRange) || '30d',
+					topics: [...(((this.kbForm.webSync || {}).topics) || [])],
+					allowedDomains: [...(((this.kbForm.webSync || {}).allowedDomains) || [])]
+				}
 			};
 			if (this.kbModalMode === 'edit') this.$emit('update-kb', payload);
 			else this.$emit('create-kb', payload);
@@ -544,8 +705,8 @@ export default {
 }
 
 .panel.mobile {
-	width: var(--agent-panel-width, min(240px, calc(86vw * 2 / 3)));
-	max-width: 86vw;
+	width: 100vw;
+	max-width: 100vw;
 	transform: translateX(100%);
 	transition: transform 0.22s ease, width 0.2s ease;
 }
@@ -1071,6 +1232,154 @@ export default {
 
 .modal-textarea.large {
 	min-height: 126px;
+}
+
+.web-card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px;
+	margin-bottom: 8px;
+	border: 1px solid #e2e9f6;
+	border-radius: 14px;
+	background: #f9fbff;
+}
+
+.web-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.web-label {
+	font-size: 13px;
+	color: #374151;
+	font-weight: 500;
+}
+
+.web-body {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.web-mode-row {
+	display: flex;
+	gap: 8px;
+}
+
+.web-time-row {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.web-sub-label {
+	font-size: 12px;
+	color: #6b7280;
+}
+
+.web-time-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.web-mode-btn {
+	margin: 0;
+	height: 30px;
+	line-height: 28px;
+	padding: 0 12px;
+	border-radius: 999px;
+	border: 1px solid #d9e4ff;
+	background: #fff;
+	color: #2f6dff;
+	font-size: 12px;
+}
+
+.web-mode-btn.active {
+	background: #eaf2ff;
+	border-color: #bfd4ff;
+}
+
+.web-mode-btn::after {
+	border: none;
+}
+
+.web-time-btn {
+	margin: 0;
+	height: 28px;
+	line-height: 26px;
+	padding: 0 10px;
+	border-radius: 999px;
+	border: 1px solid #d9e4ff;
+	background: #fff;
+	color: #2f6dff;
+	font-size: 12px;
+}
+
+.web-time-btn.active {
+	background: #eaf2ff;
+	border-color: #bfd4ff;
+}
+
+.web-time-btn::after {
+	border: none;
+}
+
+.web-input-row {
+	display: flex;
+	gap: 8px;
+}
+
+.web-input-row .modal-input {
+	margin-bottom: 0;
+	flex: 1;
+}
+
+.web-add-btn {
+	margin: 0;
+	height: 40px;
+	line-height: 38px;
+	padding: 0 12px;
+	border-radius: 999px;
+	border: 1px solid #d9e4ff;
+	background: #f4f8ff;
+	color: #2f6dff;
+	font-size: 12px;
+	flex-shrink: 0;
+}
+
+.web-add-btn::after {
+	border: none;
+}
+
+.selected-web-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.web-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: #edf3ff;
+	border: 1px solid #d9e4ff;
+	border-radius: 999px;
+	padding: 4px 10px;
+}
+
+.web-tag-text {
+	font-size: 12px;
+	color: #2f6dff;
+}
+
+.web-tag-remove {
+	font-size: 12px;
+	color: #5b6b80;
+	line-height: 1;
 }
 
 .modal-title {

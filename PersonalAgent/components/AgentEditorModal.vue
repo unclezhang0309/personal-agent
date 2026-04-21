@@ -21,22 +21,16 @@
 
 				<text class="label">角色头像</text>
 				<view class="avatar-section">
-					<view class="avatar-preview">
-						<image class="avatar-preview-image" :src="selectedAvatarSrc" mode="aspectFill"></image>
-					</view>
-					<scroll-view class="avatar-scroll" scroll-x :show-scrollbar="false">
-						<view class="avatar-grid">
-							<view
-								v-for="emoji in avatarOptions"
-								:key="`avatar-${emoji}`"
-								class="avatar-option"
-								:class="{ active: formData.avatarPreset === emoji }"
-								@click="onAvatarSelect(emoji)"
-							>
-								<text class="avatar-option-text">{{ emoji }}</text>
-							</view>
+					<view class="avatar-info" @click="openAvatarPicker">
+						<view class="avatar-preview">
+							<image class="avatar-preview-image" :src="selectedAvatarSrc" mode="aspectFill"></image>
 						</view>
-					</scroll-view>
+						<view class="avatar-meta">
+							<text class="avatar-meta-title">当前头像</text>
+							<text class="avatar-meta-desc">点击右侧按钮可更换头像</text>
+						</view>
+					</view>
+					<button class="avatar-picker-btn" @click="openAvatarPicker">选择头像</button>
 				</view>
 
 				<text class="label">角色部件（预设）</text>
@@ -107,12 +101,7 @@
 
 				<text class="label">绑定知识库（可多选）</text>
 				<view class="kb-list">
-					<input
-						class="kb-search-input"
-						:value="kbSearchText"
-						placeholder="搜索知识库名称..."
-						@input="onKbSearchInput"
-					/>
+					<button class="kb-picker-btn" @click="openKbPicker">选择知识库</button>
 					<view v-if="selectedKbs.length > 0" class="selected-kb-wrap">
 						<text class="selected-kb-title">已选 {{ selectedKbs.length }} 项</text>
 						<view class="selected-kb-tags">
@@ -122,34 +111,74 @@
 							</view>
 						</view>
 					</view>
-					<scroll-view
-						v-if="kbs.length > 0"
-						class="kb-option-list"
-						scroll-y
-						:show-scrollbar="false"
-						@scroll="onKbListScroll"
-					>
-						<view class="kb-list-spacer" :style="{ height: `${kbListTopSpacer}px` }"></view>
-						<view
-							v-for="kb in visibleFilteredKbs"
-							:key="kb.id"
-							class="kb-item"
-							:class="{ selected: (formData.boundKbIds || []).includes(kb.id) }"
-							@click="toggleKb(kb.id)"
-						>
-							<text class="kb-item-name">{{ kb.name }}</text>
-							<text class="kb-item-check">{{ (formData.boundKbIds || []).includes(kb.id) ? '已选' : '选择' }}</text>
-						</view>
-						<view class="kb-list-spacer" :style="{ height: `${kbListBottomSpacer}px` }"></view>
-						<text v-if="filteredKbs.length === 0" class="hint">没有匹配的知识库</text>
-					</scroll-view>
-					<text v-else class="hint">知识库为空，请先在知识库面板创建</text>
+					<text v-else class="hint">暂未绑定知识库</text>
 				</view>
+
 			</view>
 
 			<view class="footer">
 				<button class="btn ghost" @click="$emit('close')">取消</button>
 				<button class="btn primary" @click="onSubmit">保存</button>
+			</view>
+		</view>
+
+		<view v-if="avatarPickerVisible" class="avatar-picker-overlay" @click.self="closeAvatarPicker">
+			<view class="avatar-picker-card">
+				<view class="avatar-picker-header">
+					<text class="avatar-picker-title">选择头像</text>
+					<text class="avatar-picker-close" @click="closeAvatarPicker">×</text>
+				</view>
+				<scroll-view class="avatar-picker-scroll" scroll-y :show-scrollbar="false">
+					<view class="avatar-picker-grid">
+						<view class="avatar-picker-item upload" @click="onPickLocalAvatar">
+							<text class="avatar-picker-plus">+</text>
+						</view>
+						<view
+							v-for="emoji in avatarOptions"
+							:key="`picker-avatar-${emoji}`"
+							class="avatar-picker-item"
+							:class="{ active: formData.avatarPreset === emoji && !formData.avatarIsCustom }"
+							@click="onAvatarSelect(emoji)"
+						>
+							<text class="avatar-picker-emoji">{{ emoji }}</text>
+						</view>
+					</view>
+				</scroll-view>
+			</view>
+		</view>
+		<view v-if="kbPickerVisible" class="avatar-picker-overlay" @click.self="closeKbPicker">
+			<view class="avatar-picker-card">
+				<view class="avatar-picker-header">
+					<text class="avatar-picker-title">选择知识库</text>
+					<text class="avatar-picker-close" @click="closeKbPicker">×</text>
+				</view>
+				<view class="kb-picker-search-wrap">
+					<input
+						class="kb-search-input"
+						:value="kbSearchText"
+						placeholder="搜索知识库名称..."
+						@input="onKbSearchInput"
+					/>
+				</view>
+				<scroll-view v-if="kbs.length > 0" class="kb-option-list kb-option-list--modal" scroll-y :show-scrollbar="false" @scroll="onKbListScroll">
+					<view class="kb-list-spacer" :style="{ height: `${kbListTopSpacer}px` }"></view>
+					<view
+						v-for="kb in visibleFilteredKbs"
+						:key="kb.id"
+						class="kb-item"
+						:class="{ selected: (formData.boundKbIds || []).includes(kb.id) }"
+						@click="toggleKb(kb.id)"
+					>
+						<text class="kb-item-name">{{ kb.name }}</text>
+						<text class="kb-item-check">{{ (formData.boundKbIds || []).includes(kb.id) ? '已选' : '选择' }}</text>
+					</view>
+					<view class="kb-list-spacer" :style="{ height: `${kbListBottomSpacer}px` }"></view>
+					<text v-if="filteredKbs.length === 0" class="hint">没有匹配的知识库</text>
+				</scroll-view>
+				<text v-else class="hint kb-picker-empty">知识库为空，请先在知识库面板创建</text>
+				<view class="avatar-picker-actions">
+					<button class="btn ghost" @click="closeKbPicker">完成</button>
+				</view>
 			</view>
 		</view>
 	</view>
@@ -188,6 +217,7 @@ function createDefaultForm() {
 		description: '',
 		avatarPreset: '🤖',
 		avatar: '',
+		avatarIsCustom: false,
 		avatarParts: {
 			head: headOptions[0].value,
 			body: bodyOptions[0].value,
@@ -224,6 +254,8 @@ export default {
 			kbListViewportH: 0,
 			kbItemH: 56,
 			kbOverscan: 4,
+			avatarPickerVisible: false,
+			kbPickerVisible: false,
 			avatarOptions: [
 				'🤖',
 				'🧠',
@@ -295,6 +327,10 @@ export default {
 				this.initForm();
 				this.$nextTick(() => this.measureKbListViewport());
 			}
+		},
+		kbPickerVisible(next) {
+			if (!next) return;
+			this.$nextTick(() => this.measureKbListViewport());
 		}
 	},
 	methods: {
@@ -323,6 +359,35 @@ export default {
 		onAvatarSelect(emoji) {
 			this.formData.avatarPreset = emoji;
 			this.formData.avatar = this.buildAvatarDataUrl(emoji);
+			this.formData.avatarIsCustom = false;
+			this.closeAvatarPicker();
+		},
+		openAvatarPicker() {
+			this.avatarPickerVisible = true;
+		},
+		closeAvatarPicker() {
+			this.avatarPickerVisible = false;
+		},
+		openKbPicker() {
+			this.kbPickerVisible = true;
+			this.$nextTick(() => this.measureKbListViewport());
+		},
+		closeKbPicker() {
+			this.kbPickerVisible = false;
+		},
+		onPickLocalAvatar() {
+			uni.chooseImage({
+				count: 1,
+				sizeType: ['compressed'],
+				sourceType: ['album'],
+				success: (res) => {
+					const list = (res && res.tempFilePaths) || [];
+					if (!list.length) return;
+					this.formData.avatar = list[0];
+					this.formData.avatarIsCustom = true;
+					this.closeAvatarPicker();
+				}
+			});
 		},
 		buildAvatarDataUrl(emoji) {
 			const icon = emoji || '🤖';
@@ -472,9 +537,9 @@ export default {
 
 .textarea {
 	width: 100%;
-	min-height: 140rpx;
+	min-height: 52rpx;
 	background: #f9fbff;
-	border-radius: 24rpx;
+	border-radius: 32rpx;
 	padding: 14rpx 20rpx;
 	box-sizing: border-box;
 	font-size: 24rpx;
@@ -482,21 +547,36 @@ export default {
 	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
+
 .avatar-section {
 	display: flex;
 	align-items: center;
-	gap: 14rpx;
+	gap: 10rpx;
 	padding: 8rpx 0 6rpx;
 }
 
+.avatar-info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+	padding: 8rpx 10rpx;
+	border-radius: 999rpx;
+	border: 1px solid #e2e9f6;
+	background: #f9fbff;
+	box-sizing: border-box;
+}
+
 .avatar-preview {
-	width: 88rpx;
-	height: 88rpx;
+	width: 74rpx;
+	height: 74rpx;
 	border-radius: 50%;
 	border: 1px solid #d5e1fa;
 	background: #fff;
 	overflow: hidden;
 	flex-shrink: 0;
+	cursor: pointer;
 }
 
 .avatar-preview-image {
@@ -505,28 +585,112 @@ export default {
 	border-radius: 50%;
 }
 
-.avatar-grid {
+.avatar-meta {
 	display: flex;
-	flex-wrap: nowrap;
-	gap: 8rpx;
-	width: max-content;
+	flex-direction: column;
+	gap: 2rpx;
+	min-width: 0;
 }
 
-.avatar-scroll {
-	flex: 1;
-	min-width: 0;
+.avatar-meta-title {
+	font-size: 22rpx;
+	color: #374151;
+	font-weight: 600;
+}
+
+.avatar-meta-desc {
+	font-size: 20rpx;
+	color: #6b7280;
 	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.avatar-picker-btn {
+	margin: 0;
+	height: 56rpx;
+	min-height: 56rpx;
+	padding: 0 18rpx;
+	line-height: 54rpx;
+	border-radius: 999rpx;
+	border: 1px solid #d9e4ff;
+	background: #f4f8ff;
+	color: #2f6dff;
+	font-size: 22rpx;
+	font-weight: 500;
+}
+
+.avatar-picker-btn::after {
+	border: none;
+}
+
+.avatar-picker-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.42);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1900;
+	padding: 16rpx;
+	box-sizing: border-box;
+}
+
+.avatar-picker-card {
+	width: min(680rpx, 92vw);
+	max-height: 72vh;
+	background: #fff;
+	border-radius: 24rpx;
+	border: 1px solid #e6ebf5;
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.avatar-picker-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16rpx 18rpx;
+	border-bottom: 1px solid #e6ebf5;
+}
+
+.avatar-picker-title {
+	font-size: 26rpx;
+	font-weight: 600;
+	color: #111827;
+}
+
+.avatar-picker-close {
+	font-size: 34rpx;
+	line-height: 1;
+	color: #6b7280;
+	padding: 0 4rpx;
+}
+
+.avatar-picker-scroll {
+	flex: 1;
+	min-height: 0;
+	padding: 14rpx 18rpx 18rpx;
+	box-sizing: border-box;
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 }
 
-.avatar-scroll::-webkit-scrollbar {
+.avatar-picker-scroll::-webkit-scrollbar {
 	display: none;
 }
 
-.avatar-option {
-	width: 52rpx;
-	height: 52rpx;
+.avatar-picker-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10rpx;
+}
+
+.avatar-picker-item {
+	width: 62rpx;
+	height: 62rpx;
 	border-radius: 50%;
 	border: 1px solid #d9e4ff;
 	background: #f4f8ff;
@@ -535,14 +699,25 @@ export default {
 	justify-content: center;
 }
 
-.avatar-option.active {
+.avatar-picker-item.active {
 	border-color: #2f6dff;
 	background: #eaf2ff;
 	box-shadow: 0 0 0 2px rgba(47, 109, 255, 0.14);
 }
 
-.avatar-option-text {
-	font-size: 26rpx;
+.avatar-picker-item.upload {
+	background: #ffffff;
+	border-style: dashed;
+}
+
+.avatar-picker-plus {
+	font-size: 38rpx;
+	line-height: 1;
+	color: #2f6dff;
+}
+
+.avatar-picker-emoji {
+	font-size: 30rpx;
 	line-height: 1;
 }
 
@@ -582,6 +757,24 @@ export default {
 	flex-direction: column;
 	gap: 10rpx;
 	margin-top: 8rpx;
+}
+
+.kb-picker-btn {
+	margin: 0;
+	height: 60rpx;
+	min-height: 60rpx;
+	line-height: 58rpx;
+	border-radius: 999rpx;
+	border: 1px solid #d9e4ff;
+	background: #f4f8ff;
+	color: #2f6dff;
+	font-size: 22rpx;
+	font-weight: 500;
+	padding: 0 16rpx;
+}
+
+.kb-picker-btn::after {
+	border: none;
 }
 
 .kb-search-input {
@@ -646,6 +839,14 @@ export default {
 	-ms-overflow-style: none;
 }
 
+.kb-option-list--modal {
+	flex: 1;
+	max-height: none;
+	min-height: 0;
+	padding: 0 18rpx 10rpx;
+	box-sizing: border-box;
+}
+
 .kb-option-list::-webkit-scrollbar {
 	display: none;
 }
@@ -691,6 +892,21 @@ export default {
 .hint {
 	font-size: 22rpx;
 	color: #999;
+}
+
+.kb-picker-search-wrap {
+	padding: 14rpx 18rpx 10rpx;
+}
+
+.kb-picker-empty {
+	padding: 0 18rpx 14rpx;
+}
+
+.avatar-picker-actions {
+	border-top: 1px solid #e6ebf5;
+	padding: 12rpx 18rpx 14rpx;
+	display: flex;
+	justify-content: flex-end;
 }
 
 .footer {
