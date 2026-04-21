@@ -3,7 +3,9 @@
 		<view class="sidebar-header">
 			<view v-if="!collapsed" class="header-main">
 				<text class="title">角色</text>
-				<button class="header-primary-btn" size="mini" @click="$emit('create')">+</button>
+				<button class="header-primary-btn" size="mini" @click="$emit('create')">
+					<text class="plus-text">+</text>
+				</button>
 			</view>
 			<view class="header-actions">
 				<button class="header-icon-btn" size="mini" @click="$emit('toggle-collapse')">
@@ -29,7 +31,14 @@
 				</view>
 				<view v-if="!collapsed" class="role-actions">
 					<view class="more-wrap">
-						<button class="more-btn" size="mini" @click.stop="toggleRoleMenu(entry.role.id)">⋯</button>
+						<button
+							class="more-btn"
+							:class="{ active: openMenuRoleId === entry.role.id }"
+							size="mini"
+							@click.stop="toggleRoleMenu(entry.role.id)"
+						>
+							<uni-icons type="more-filled" size="14" color="#60708a"></uni-icons>
+						</button>
 						<view v-if="openMenuRoleId === entry.role.id" class="item-menu">
 							<text class="menu-item" @click.stop="onEdit(entry.role)">编辑</text>
 							<text class="menu-item danger" @click.stop="onDelete(entry.role.id)">删除</text>
@@ -205,18 +214,27 @@ export default {
 }
 
 .header-primary-btn {
+	width: 28px;
 	height: 28px;
+	min-width: 28px;
 	min-height: 28px;
-	line-height: 26px;
-	padding: 0 12px;
-	font-size: 13px;
-	font-weight: 500;
+	line-height: 1;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	border-radius: 999px;
 	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
 	color: #fff;
 	border: 1px solid rgba(36, 94, 226, 0.95);
-	white-space: nowrap;
 	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+}
+
+.plus-text {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1;
+	transform: translateY(-1px);
 }
 
 .header-primary-btn::after {
@@ -352,15 +370,23 @@ export default {
 	min-width: 24px;
 	padding: 0;
 	line-height: 1;
-	font-size: 18px;
-	font-weight: 600;
 	color: #6b7280;
-	background: #f6f8fc;
-	border: 1px solid #e3e9f4;
+	background: transparent;
+	border: 1px solid transparent;
 	border-radius: 999px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.more-btn::after {
+	border: none;
+}
+
+.more-btn.active {
+	background: #f3f7ff;
+	border-color: #d8e4fa;
 }
 
 .item-menu {
@@ -471,8 +497,8 @@ export default {
 }
 
 .more-btn:hover {
-	background: #ffffff;
-	border-color: #cfd8e8;
+	background: #f3f7ff;
+	border-color: #d8e4fa;
 }
 
 .menu-item:hover {

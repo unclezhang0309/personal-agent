@@ -7,7 +7,9 @@
 				</button>
 				<view v-if="!collapsed" class="header-main">
 					<text class="title">知识库</text>
-					<button size="mini" class="header-primary-btn" @click="openCreateKb">+</button>
+					<button size="mini" class="header-primary-btn" @click="openCreateKb">
+						<text class="plus-text">+</text>
+					</button>
 				</view>
 			</view>
 
@@ -23,7 +25,6 @@
 				<view v-for="kb in visibleKbs" :key="kb.id" class="kb-card" :class="{ 'menu-open': activeKbMenuId === kb.id }">
 					<view class="kb-head">
 						<view class="kb-title-wrap">
-							<text class="kb-icon">{{ kb.icon || '📘' }}</text>
 							<view class="kb-meta">
 								<text class="kb-name">{{ kb.name }}</text>
 								<text class="kb-desc">{{ kb.description || '暂无描述' }}</text>
@@ -31,7 +32,14 @@
 						</view>
 						<view class="kb-actions">
 							<view class="more-wrap">
-								<button class="more-btn" size="mini" @click.stop="toggleKbMenu(kb.id)">⋯</button>
+								<button
+									class="more-btn"
+									:class="{ active: activeKbMenuId === kb.id }"
+									size="mini"
+									@click.stop="toggleKbMenu(kb.id)"
+								>
+									<uni-icons type="more-filled" size="14" color="#60708a"></uni-icons>
+								</button>
 								<view v-if="activeKbMenuId === kb.id" class="item-menu">
 									<text class="menu-item" @click.stop="onEditKb(kb)">编辑</text>
 									<text class="menu-item danger" @click.stop="onDeleteKb(kb.id)">删除</text>
@@ -45,7 +53,9 @@
 							<text class="count">条目数：{{ getCount(kb.id) }}</text>
 						</view>
 						<view class="sub-actions">
-							<button size="mini" class="add-item-btn" @click.stop="openCreateItem(kb.id)">+新增条目</button>
+							<button size="mini" class="add-item-btn" @click.stop="openCreateItem(kb.id)">
+								<text class="plus-text">+</text>
+							</button>
 						</view>
 					</view>
 
@@ -62,7 +72,14 @@
 							</view>
 							<view class="item-actions">
 								<view class="more-wrap">
-									<button class="more-btn" size="mini" @click.stop="toggleItemMenu(item.id)">⋯</button>
+									<button
+										class="more-btn"
+										:class="{ active: activeItemMenuId === item.id }"
+										size="mini"
+										@click.stop="toggleItemMenu(item.id)"
+									>
+										<uni-icons type="more-filled" size="14" color="#60708a"></uni-icons>
+									</button>
 									<view v-if="activeItemMenuId === item.id" class="item-menu">
 										<text class="menu-item" @click.stop="onEditItem(item)">编辑</text>
 										<text class="menu-item danger" @click.stop="onDeleteItem(item.id)">删除</text>
@@ -597,17 +614,19 @@ export default {
 }
 
 .header-primary-btn {
+	width: 28px;
 	height: 28px;
+	min-width: 28px;
 	min-height: 28px;
-	line-height: 26px;
-	padding: 0 12px;
-	font-size: 13px;
-	font-weight: 500;
+	line-height: 1;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	border-radius: 999px;
 	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
 	color: #fff;
 	border: 1px solid rgba(36, 94, 226, 0.95);
-	white-space: nowrap;
 	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
 }
 
@@ -694,14 +713,10 @@ export default {
 
 .kb-title-wrap {
 	display: flex;
+	align-items: center;
 	gap: 8px;
 	flex: 1;
 	min-width: 0;
-}
-
-.kb-icon {
-	font-size: 28rpx;
-	line-height: 1.2;
 }
 
 .kb-meta {
@@ -710,11 +725,13 @@ export default {
 	gap: 2px;
 	flex: 1;
 	min-width: 0;
+	padding-left: 6px;
 }
 
 .kb-name {
 	font-size: 28rpx;
 	font-weight: 600;
+	line-height: 1.25;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -743,12 +760,20 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
-	line-height: 1;
 	color: #6b7280;
-	background: #f6f8fc;
-	border: 1px solid #e3e9f4;
+	background: transparent;
+	border: 1px solid transparent;
 	border-radius: 999px;
+	transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.more-btn::after {
+	border: none;
+}
+
+.more-btn.active {
+	background: #f3f7ff;
+	border-color: #d8e4fa;
 }
 
 .item-menu {
@@ -800,14 +825,20 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin: 8px 2px 8px 0;
+	width: 100%;
+	margin: 10px 0 0;
 	padding: 6px 8px;
-	background: #f8faff;
+	background: #eaf2ff;
 	border: none;
+	border: 1px solid #d4e3fb;
 	border-radius: 999px;
 	box-sizing: border-box;
 	cursor: pointer;
 	transition: all 0.2s ease;
+}
+
+.kb-subline + view {
+	margin-top: 8px;
 }
 
 .subline-left {
@@ -913,13 +944,32 @@ export default {
 
 .add-item-btn {
 	margin: 0;
-	font-size: 22rpx;
-	line-height: 1.8;
-	background: #edf3ff;
-	color: #2f6dff;
+	height: 30px;
+	min-height: 30px;
+	width: 30px;
+	min-width: 30px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+	background: linear-gradient(135deg, #2f6dff 0%, #4f87ff 100%);
+	color: #fff;
 	border-radius: 999px;
-	border: 1px solid #d9e4ff;
-	transition: all 0.2s ease;
+	border: 1px solid rgba(36, 94, 226, 0.95);
+	box-shadow: 0 6px 14px rgba(47, 109, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.2);
+	transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.add-item-btn::after {
+	border: none;
+}
+
+.plus-text {
+	font-size: 18px;
+	font-weight: 600;
+	line-height: 1;
+	transform: translateY(-1px);
 }
 
 .empty {
@@ -1119,7 +1169,7 @@ export default {
 }
 
 .kb-subline:hover {
-	background: #f2f7ff;
+	background: #e2edff;
 }
 
 .item-row:hover {
@@ -1131,8 +1181,8 @@ export default {
 }
 
 .more-btn:hover {
-	background: #ffffff;
-	border-color: #cfd8e8;
+	background: #f3f7ff;
+	border-color: #d8e4fa;
 }
 
 .menu-item:hover {
@@ -1144,10 +1194,13 @@ export default {
 }
 
 .page-btn:hover,
-.ghost-btn:hover,
+.ghost-btn:hover {
+	background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+	border-color: #c5d7f6;
+}
+
 .add-item-btn:hover {
-	background: #ffffff;
-	border-color: #cfd8e8;
+	filter: brightness(1.03);
 }
 
 .modal-input:focus,
